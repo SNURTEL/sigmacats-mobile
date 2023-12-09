@@ -2,8 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'RaceDetails.dart';
+import 'RaceParticipation.dart';
+import 'functions.dart';
 
 class RaceList extends StatefulWidget {
+  const RaceList({Key? key}) : super(key: key);
+
   @override
   _RaceListState createState() => _RaceListState();
 }
@@ -19,7 +23,8 @@ class _RaceListState extends State<RaceList> {
   }
 
   Future<void> fetchRaceList() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/race'));
+    final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/api/rider/race'));
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the races from the response
@@ -36,32 +41,96 @@ class _RaceListState extends State<RaceList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Scrollbar(
-        child: ListView.builder(
-          itemCount: itemList.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-              leading: Container(
-                width: 60.0,
-                height: 60.0,
-                child: Image.asset(
-                  'lib/sample_image.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              title: Text(itemList[index].name),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RaceDetails(itemList[index].id),
-                  ),
-                );
-              },
-            );
-          },
+      appBar: AppBar(
+        title: Text(
+          'Dostępne wyścigi',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 30.0,
+          ),
         ),
+        centerTitle: true,
+        automaticallyImplyLeading: false, // Removes back arrow
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Scrollbar(
+          child: ListView.builder(
+            itemCount: itemList.length,
+            itemBuilder: (context, index) {
+              return Column(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RaceDetails(itemList[index].id),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.all(5.0),
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 160.0, // Fixed height
+                            width: double.infinity, // Fill the available width
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(16.0),
+                                topRight: Radius.circular(16.0),
+                              ),
+                              child: Image.asset(
+                                'lib/sample_image.png',
+                                fit: BoxFit.fitWidth, // Ensure the image fills the container
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            contentPadding: const EdgeInsets.all(10.0),
+                            title: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  itemList[index].name,
+                                  style: TextStyle(
+                                    fontSize: 20.0, // Adjust the font size as needed
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  formatDateString(itemList[index].time),
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.0), // Add space between list elements
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RaceParticipation(),
+            ),
+          );
+        },
+        label: Text('Rozpocznij Wyścig'),
+        icon: Icon(Icons.pedal_bike),
       ),
     );
   }
@@ -70,13 +139,15 @@ class _RaceListState extends State<RaceList> {
 class Race {
   final int id;
   final String name;
+  final String time;
 
-  Race({required this.id, required this.name});
+  Race({required this.id, required this.name, required this.time});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     return Race(
       id: json['id'],
       name: json['name'],
+      time: json['meetup_timestamp'],
     );
   }
 }

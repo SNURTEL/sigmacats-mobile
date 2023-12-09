@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'functions.dart';
 
 class RaceDetails extends StatefulWidget {
   final int id;
 
-  RaceDetails(this.id);
+  const RaceDetails(this.id, {super.key});
 
   @override
   _RaceDetailsState createState() => _RaceDetailsState();
@@ -14,7 +15,11 @@ class RaceDetails extends StatefulWidget {
 class _RaceDetailsState extends State<RaceDetails> {
   String selectedValue = 'Szosa';
   String raceName = '';
+  String requirements = '';
   String raceDescription = '';
+  String meetupTimestamp = '2000-01-01T00:00:00'; //Dummy date
+  int numberOfLaps = 0;
+  int entryFeeGr = 0;
 
   @override
   void initState() {
@@ -31,7 +36,11 @@ class _RaceDetailsState extends State<RaceDetails> {
       final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
       setState(() {
         raceName = raceDetails['name'];
+        requirements = raceDetails['requirements'];
+        numberOfLaps = raceDetails['no_laps'];
+        entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
+        meetupTimestamp = raceDetails['meetup_timestamp'];
       });
     } else {
       // If the server did not return a 200 OK response, throw an exception.
@@ -42,53 +51,152 @@ class _RaceDetailsState extends State<RaceDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(raceName),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              'lib/sample_image.png',
-              fit: BoxFit.cover,
-            ),
-            SizedBox(height: 16.0),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image
+              ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16.0),
+                  topRight: Radius.circular(16.0),
+                  bottomLeft: Radius.circular(16.0),
+                  bottomRight: Radius.circular(16.0),
+                ),
+                child: Image.asset(
+                  'lib/sample_image.png',
+                  fit: BoxFit.fitWidth, // Ensure the image fills the container
+                ),
               ),
-              padding: EdgeInsets.all(12.0),
-              child: Column(
+              const SizedBox(height: 5.0),
+              // Card with race name and meetupTimestamp
+              Card(
+                child: ListTile(
+                  title: Text(
+                    raceName,
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(formatDateString(meetupTimestamp)),
+                ),
+              ),
+              const SizedBox(height: 5.0),
+              // Two separate cards for entryFeeGr and numberOfLaps (each taking half width)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Race Description: $raceDescription',
-                    style: TextStyle(fontSize: 16.0),
+                  Expanded(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Wpisowe: ${(entryFeeGr/100).toStringAsFixed(2)}zł',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ilość okrążeń: ${numberOfLaps.toString()}',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                showAddTextDialog(context);
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add),
-                  SizedBox(width: 8.0),
-                  Text('Weź udział w wyścigu!'),
-                ],
+              const SizedBox(height: 5.0),
+              // Card with requirements (full width)
+              Container(
+                width: double.infinity,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Wymagania:',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 5.0),
+                        Text(
+                          requirements,
+                          style: TextStyle(fontSize: 14.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 5.0),
+              // Card with raceDescription (full width)
+              Container(
+                width: double.infinity,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Opis',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 5.0),
+                        Text(
+                          raceDescription,
+                          style: TextStyle(fontSize: 14.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showAddTextDialog(context);
+        },
+        label: const Text('Weź udział w wyścigu!'),
+        icon: const Icon(Icons.add),
       ),
     );
   }
+
 
   void showAddTextDialog(BuildContext context) {
     showDialog(
@@ -97,7 +205,7 @@ class _RaceDetailsState extends State<RaceDetails> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Wybierz swój rower:'),
+              title: const Text('Wybierz swój rower:'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -120,7 +228,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 16.0),
+                  const SizedBox(height: 16.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -128,14 +236,14 @@ class _RaceDetailsState extends State<RaceDetails> {
                         onPressed: () {
                           Navigator.pop(context); // Close the dialog
                         },
-                        child: Text('Anuluj'),
+                        child: const Text('Anuluj'),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           showNotification(context, 'Udało się zapisać na wyścig!');
                           Navigator.pop(context); // Close the dialog
                         },
-                        child: Text('Accept'),
+                        child: const Text('Accept'),
                       ),
                     ],
                   ),
@@ -151,7 +259,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   void showNotification(BuildContext context, String message) {
     final snackBar = SnackBar(
       content: Text(message),
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
