@@ -32,11 +32,18 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> fetchRaceDetails() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}'));
+    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}?rider_id=1'));
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the race details
       final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
+
+      // Extract participation status from the response
+      final String? participationStatus = raceDetails['participation_status'];
+
+      // Check if the user is participating
+      final bool userParticipating = participationStatus != null;
+
       setState(() {
         raceName = raceDetails['name'];
         requirements = raceDetails['requirements'];
@@ -44,6 +51,7 @@ class _RaceDetailsState extends State<RaceDetails> {
         entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
         meetupTimestamp = raceDetails['meetup_timestamp'];
+        isParticipating = userParticipating;
       });
     } else {
       // If the server did not return a 200 OK response, throw an exception.
