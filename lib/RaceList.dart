@@ -24,7 +24,7 @@ class _RaceListState extends State<RaceList> {
 
   Future<void> fetchRaceList() async {
     final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/race'));
+        Uri.parse('http://10.0.2.2:8000/api/rider/race/?rider_id=1'));
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the races from the response

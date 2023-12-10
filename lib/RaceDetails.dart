@@ -13,13 +13,15 @@ class RaceDetails extends StatefulWidget {
 }
 
 class _RaceDetailsState extends State<RaceDetails> {
-  String selectedValue = 'Szosa';
+  String selectedValue = '';
   String raceName = '';
   String requirements = '';
   String raceDescription = '';
-  String meetupTimestamp = '2000-01-01T00:00:00'; //Dummy date
+  String meetupTimestamp = '2000-01-01T00:00:00'; // Dummy date
   int numberOfLaps = 0;
   int entryFeeGr = 0;
+  List<String> bikeNames = [];
+  String selectedBike = '';
 
   @override
   void initState() {
@@ -48,6 +50,24 @@ class _RaceDetailsState extends State<RaceDetails> {
     }
   }
 
+  Future<void> fetchBikeNames() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/bike/?rider_id=1'));
+
+    if (response.statusCode == 200) {
+      // If the server returns a 200 OK response, parse the bike names
+      final List<dynamic> bikes = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        bikeNames = bikes.map((bike) => bike['name'].toString()).toList();
+        if (bikeNames.isNotEmpty) {
+          selectedValue = bikeNames[0]; // Set the default selected bike
+        }
+      });
+    } else {
+      // If the server did not return a 200 OK response, throw an exception.
+      throw Exception('Failed to load bike names');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,12 +79,7 @@ class _RaceDetailsState extends State<RaceDetails> {
             children: [
               // Image
               ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16.0),
-                  topRight: Radius.circular(16.0),
-                  bottomLeft: Radius.circular(16.0),
-                  bottomRight: Radius.circular(16.0),
-                ),
+                borderRadius: BorderRadius.circular(16.0),
                 child: Image.asset(
                   'lib/sample_image.png',
                   fit: BoxFit.fitWidth, // Ensure the image fills the container
@@ -197,8 +212,8 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
   }
 
-
   void showAddTextDialog(BuildContext context) {
+    fetchBikeNames(); // Fetch bike names before showing the dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -216,12 +231,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                         selectedValue = value!;
                       });
                     },
-                    items: [
-                      'Szosa',
-                      'Ostre koło',
-                      'Inny',
-                      // Add more items as needed
-                    ].map<DropdownMenuItem<String>>((String value) {
+                    items: bikeNames.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
