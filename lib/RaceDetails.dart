@@ -6,7 +6,7 @@ import 'functions.dart';
 class RaceDetails extends StatefulWidget {
   final int id;
 
-  const RaceDetails(this.id, {super.key});
+  const RaceDetails(this.id, {Key? key}) : super(key: key);
 
   @override
   _RaceDetailsState createState() => _RaceDetailsState();
@@ -20,8 +20,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   String meetupTimestamp = '2000-01-01T00:00:00'; // Dummy date
   int numberOfLaps = 0;
   int entryFeeGr = 0;
-  List<String> bikeNames = [];
+  List<Map<String, dynamic>> bikes = [];
   String selectedBike = '';
+  bool isParticipating = false;
 
   @override
   void initState() {
@@ -50,21 +51,53 @@ class _RaceDetailsState extends State<RaceDetails> {
     }
   }
 
-  Future<void> fetchBikeNames() async {
+  Future<List<Map<String, dynamic>>> fetchBikeNames() async {
     final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/bike/?rider_id=1'));
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the bike names
-      final List<dynamic> bikes = json.decode(utf8.decode(response.bodyBytes));
+      // If the server returns a 200 OK response, parse the bike names and ids
+      final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
+      final List<Map<String, dynamic>> bikesData = bikeList
+          .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
+          .toList();
       setState(() {
-        bikeNames = bikes.map((bike) => bike['name'].toString()).toList();
-        if (bikeNames.isNotEmpty) {
-          selectedValue = bikeNames[0]; // Set the default selected bike
+        bikes = bikesData;
+        if (bikes.isNotEmpty) {
+          selectedValue = bikes[0]['name']; // Set the default selected bike
         }
       });
+      return bikesData;
     } else {
       // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load bike names');
+    }
+  }
+
+  Future<void> joinRace(int bikeId) async {
+    final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/join?rider_id=1&bike_id=$bikeId'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        isParticipating = true;
+      });
+      showNotification(context, 'Udało się zapisać na wyścig!');
+    } else {
+      showNotification(context, 'Błąd podczas zapisywania na wyścig');
+    }
+  }
+
+  Future<void> withdrawFromRace() async {
+    final response =
+    await http.post(Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/withdraw?rider_id=1'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        isParticipating = false;
+      });
+      showNotification(context, 'Wycofano udział z wyścigu');
+    } else {
+      showNotification(context, 'Błąd podczas wycofywania udziału z wyścigu');
     }
   }
 
@@ -112,7 +145,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Wpisowe: ${(entryFeeGr/100).toStringAsFixed(2)}zł',
+                              'Wpisowe: ${(entryFeeGr / 100).toStringAsFixed(2)}zł',
                               style: TextStyle(
                                 fontSize: 14.0,
                                 fontWeight: FontWeight.bold,
@@ -202,7 +235,15 @@ class _RaceDetailsState extends State<RaceDetails> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: isParticipating
+          ? FloatingActionButton.extended(
+        onPressed: () {
+          withdrawFromRace();
+        },
+        label: const Text('Wycofaj udział'),
+        icon: const Icon(Icons.cancel),
+      )
+          : FloatingActionButton.extended(
         onPressed: () {
           showAddTextDialog(context);
         },
@@ -212,8 +253,9 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
   }
 
-  void showAddTextDialog(BuildContext context) {
-    fetchBikeNames(); // Fetch bike names before showing the dialog
+  void showAddTextDialog(BuildContext context) async {
+    // Fetch bike names before showing the dialog
+    final bikeNames = await fetchBikeNames();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -231,10 +273,10 @@ class _RaceDetailsState extends State<RaceDetails> {
                         selectedValue = value!;
                       });
                     },
-                    items: bikeNames.map<DropdownMenuItem<String>>((String value) {
+                    items: bikes.map<DropdownMenuItem<String>>((bike) {
                       return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                        value: bike['name'],
+                        child: Text(bike['name']),
                       );
                     }).toList(),
                   ),
@@ -250,7 +292,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          showNotification(context, 'Udało się zapisać na wyścig!');
+                          // Get the selected bike id based on the name
+                          final selectedBikeId = getSelectedBikeId(selectedValue);
+                          joinRace(selectedBikeId);
                           Navigator.pop(context); // Close the dialog
                         },
                         child: const Text('Accept'),
@@ -264,6 +308,11 @@ class _RaceDetailsState extends State<RaceDetails> {
         );
       },
     );
+  }
+
+  int getSelectedBikeId(String bikeName) {
+    final selectedBike = bikes.firstWhere((bike) => bike['name'] == bikeName, orElse: () => {'id': -1});
+    return selectedBike['id'];
   }
 
   void showNotification(BuildContext context, String message) {
