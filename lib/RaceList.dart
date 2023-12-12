@@ -42,15 +42,7 @@ class _RaceListState extends State<RaceList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Dostępne wyścigi',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 30.0,
-          ),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false, // Removes back arrow
+        title: Text('Dostępne wyścigi'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -94,17 +86,12 @@ class _RaceListState extends State<RaceList> {
                               children: [
                                 Text(
                                   itemList[index].name,
-                                  style: TextStyle(
-                                    fontSize: 20.0, // Adjust the font size as needed
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
                                 SizedBox(height: 5.0),
                                 Text(
                                   formatDateString(itemList[index].time),
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -129,7 +116,7 @@ class _RaceListState extends State<RaceList> {
             ),
           );
         },
-        label: Text('Rozpocznij Wyścig'),
+        label: Text('Rozpocznij wyścig'),
         icon: Icon(Icons.pedal_bike),
       ),
     );

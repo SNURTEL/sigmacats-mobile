@@ -112,6 +112,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(raceName),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -132,10 +135,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                 child: ListTile(
                   title: Text(
                     raceName,
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   subtitle: Text(formatDateString(meetupTimestamp)),
                 ),
@@ -154,10 +154,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                           children: [
                             Text(
                               'Wpisowe: ${(entryFeeGr / 100).toStringAsFixed(2)}zł',
-                              style: TextStyle(
-                                fontSize: 14.0,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ],
                         ),
@@ -173,10 +170,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                           children: [
                             Text(
                               'Ilość okrążeń: ${numberOfLaps.toString()}',
-                              style: TextStyle(
-                                fontSize: 14.0,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ],
                         ),
@@ -197,16 +191,10 @@ class _RaceDetailsState extends State<RaceDetails> {
                       children: [
                         Text(
                           'Wymagania:',
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: 5.0),
-                        Text(
-                          requirements,
-                          style: TextStyle(fontSize: 14.0),
-                        ),
+                        Text(requirements),
                       ],
                     ),
                   ),
@@ -223,17 +211,11 @@ class _RaceDetailsState extends State<RaceDetails> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Opis',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Opis:',
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: 5.0),
-                        Text(
-                          raceDescription,
-                          style: TextStyle(fontSize: 14.0),
-                        ),
+                        Text(raceDescription),
                       ],
                     ),
                   ),
