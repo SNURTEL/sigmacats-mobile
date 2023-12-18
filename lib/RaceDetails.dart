@@ -15,9 +15,12 @@ class RaceDetails extends StatefulWidget {
 class _RaceDetailsState extends State<RaceDetails> {
   String selectedValue = '';
   String raceName = '';
+  String status = '';
   String requirements = '';
   String raceDescription = '';
-  String meetupTimestamp = '2000-01-01T00:00:00'; // Dummy date
+  String meetupTimestamp = 'null';
+  String startTimestamp = '2000-01-01T00:00:00';
+  String endTimestamp = '2000-01-01T00:00:00';
   int numberOfLaps = 0;
   int entryFeeGr = 0;
   List<Map<String, dynamic>> bikes = [];
@@ -47,10 +50,15 @@ class _RaceDetailsState extends State<RaceDetails> {
       setState(() {
         raceName = raceDetails['name'];
         requirements = raceDetails['requirements'];
+        status = raceDetails['status'];
         numberOfLaps = raceDetails['no_laps'];
         entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
-        meetupTimestamp = raceDetails['meetup_timestamp'];
+        if (raceDetails['meetup_timestamp'] != null){
+          meetupTimestamp = raceDetails['meetup_timestamp'];
+        }
+        startTimestamp = raceDetails['start_timestamp'];
+        endTimestamp = raceDetails['end_timestamp'];
         isParticipating = userParticipating;
       });
     } else {
@@ -137,7 +145,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                     raceName,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  subtitle: Text(formatDateString(meetupTimestamp)),
+                  subtitle: meetupTimestamp != 'null'
+                      ? Text('Zbiórka: ${formatDateString(meetupTimestamp)}\nCzas trwania: ${formatDateString(startTimestamp)}-${formatDateStringToHours(endTimestamp)}')
+                      : Text('Czas trwania: ${formatDateString(startTimestamp)}-${formatDateStringToHours(endTimestamp)}'),
                 ),
               ),
               const SizedBox(height: 5.0),
@@ -221,24 +231,27 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
+              if (status != 'ended') const SizedBox(height: 60.0),  // Add SizedBox conditionally
             ],
           ),
         ),
       ),
-      floatingActionButton: isParticipating
+      floatingActionButton: status == 'ended'
+          ? null  // Set onPressed to null when status is 'ended'
+          : isParticipating
           ? FloatingActionButton.extended(
-        onPressed: () {
-          withdrawFromRace();
-        },
-        label: const Text('Wycofaj udział'),
-        icon: const Icon(Icons.cancel),
-      )
+            onPressed: () {
+              withdrawFromRace();
+            },
+            label: const Text('Wycofaj udział'),
+            icon: const Icon(Icons.cancel),
+          )
           : FloatingActionButton.extended(
-        onPressed: () {
-          showAddTextDialog(context);
-        },
-        label: const Text('Weź udział w wyścigu!'),
-        icon: const Icon(Icons.add),
+            onPressed: () {
+              showAddTextDialog(context);
+            },
+            label: const Text('Weź udział w wyścigu!'),
+            icon: const Icon(Icons.add),
       ),
     );
   }
