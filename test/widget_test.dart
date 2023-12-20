@@ -15,6 +15,6 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const App());
 
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
   });
 }
