@@ -231,12 +231,12 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
-              if (status != 'ended') const SizedBox(height: 60.0),  // Add SizedBox conditionally
+              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),  // Add SizedBox conditionally
             ],
           ),
         ),
       ),
-      floatingActionButton: status == 'ended'
+      floatingActionButton: status == 'ended' || status == 'cancelled'
           ? null  // Set onPressed to null when status is 'ended'
           : isParticipating
           ? FloatingActionButton.extended(
@@ -258,7 +258,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   void showAddTextDialog(BuildContext context) async {
     // Fetch bike names before showing the dialog
-    final bikeNames = await fetchBikeNames();
+    fetchBikeNames();
     showDialog(
       context: context,
       builder: (BuildContext context) {

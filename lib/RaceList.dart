@@ -48,7 +48,7 @@ class _RaceListState extends State<RaceList> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: RefreshIndicator(
           onRefresh: fetchRaceList, // Fetch data when pulled down
           child: Scrollbar(
