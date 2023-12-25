@@ -121,10 +121,62 @@ class _RaceParticipationState extends State<RaceParticipation> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Dzisiaj się nie ścigasz',
-          style: TextStyle(fontSize: 20.0),
+        Column(
+          children: [
+            Container(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Na dzisiaj nie masz zaplanowanych żadnych wyścigów',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8.0),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16.0),
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  Theme.of(context).colorScheme.surface.withOpacity(0.62),
+                  BlendMode.srcOver,
+                ),
+                child: Image.asset(
+                  'lib/sample_image.png',
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
+            ),
+            SizedBox(height: 8.0),
+            Container(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Możesz zapisać się na wyścig\nw zakładce "Wyścigi"',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+        // Additional widgets for pending status if needed
       ],
     );
   }
@@ -209,7 +261,57 @@ class _RaceParticipationState extends State<RaceParticipation> {
       );
     } else if (race.status == 'in_progress') {
       // Display the existing column for in-progress status
-      return buildInProgressRaceWidget(race);
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: double.infinity,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          race.name,
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: Image.asset(
+                  'lib/sample_image.png',
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  // Toggle the raceStarted variable
+                  setState(() {
+                    raceStarted = !raceStarted;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(double.infinity, 50.0), // Set the height to 50.0
+                ),
+                child: Text(
+                    raceStarted ? 'Zakończ wyścig' : 'Rozpocznij wyścig!',
+                    style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)
+                ),
+              ),
+            ],
+          ),
+          // Additional widgets for pending status if needed
+        ],
+      );
     } else if (race.status == 'ended') {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -225,30 +327,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
       // Handle other status scenarios if needed
       return buildDefaultWidget();
     }
-  }
-
-
-  Widget buildInProgressRaceWidget(Race race) {
-    // Use your existing code to display the in-progress race
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'You have started the race!',
-          style: TextStyle(fontSize: 20.0),
-        ),
-        SizedBox(height: 20.0),
-        ElevatedButton(
-          onPressed: () {
-            // Toggle the raceStarted variable
-            setState(() {
-              raceStarted = !raceStarted;
-            });
-          },
-          child: Text(raceStarted ? 'Stop' : 'Start'),
-        ),
-      ],
-    );
   }
 }
 
