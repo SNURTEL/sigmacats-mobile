@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'RaceDetails.dart';
-import 'RaceParticipation.dart';
 import 'functions.dart';
+import 'BottomNavigationBar.dart';
 
 class RaceList extends StatefulWidget {
   const RaceList({Key? key}) : super(key: key);
@@ -14,6 +14,7 @@ class RaceList extends StatefulWidget {
 
 class _RaceListState extends State<RaceList> {
   List<Race> itemList = [];
+  int currentIndex = 0;
 
   @override
   void initState() {
@@ -38,97 +39,113 @@ class _RaceListState extends State<RaceList> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Dostępne wyścigi'),
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: RefreshIndicator(
-        onRefresh: fetchRaceList, // Fetch data when pulled down
-        child: Scrollbar(
-          child: ListView.builder(
-            itemCount: itemList.length,
-            itemBuilder: (context, index) {
-              return Column(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RaceDetails(itemList[index].id),
-                        ),
-                      );
-                    },
-                    child: ColorFiltered(colorFilter: ColorFilter.mode(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Dostępne wyścigi'),
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: RefreshIndicator(
+          onRefresh: fetchRaceList, // Fetch data when pulled down
+          child: Scrollbar(
+            child: ListView.builder(
+              itemCount: itemList.length,
+              itemBuilder: (context, index) {
+                return Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RaceDetails(itemList[index].id),
+                          ),
+                        );
+                      },
+                      child: ColorFiltered(colorFilter: ColorFilter.mode(
                         itemList[index].status == 'ended' ? Theme.of(context).colorScheme.surface.withOpacity(0.62) : Colors.transparent,
                         BlendMode.srcOver,
-                    ),
-                      child: Card(
-                        margin: const EdgeInsets.all(5.0),
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 160.0,
-                              width: double.infinity,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16.0),
-                                  topRight: Radius.circular(16.0),
-                                ),
-                                child: Image.asset(
-                                  'lib/sample_image.png',
-                                  fit: BoxFit.fitWidth,
+                      ),
+                        child: Card(
+                          margin: const EdgeInsets.all(5.0),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 160.0,
+                                width: double.infinity,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(16.0),
+                                    topRight: Radius.circular(16.0),
+                                  ),
+                                  child: Image.asset(
+                                    'lib/sample_image.png',
+                                    fit: BoxFit.fitWidth,
+                                  ),
                                 ),
                               ),
-                            ),
-                            ListTile(
-                              contentPadding: const EdgeInsets.all(10.0),
-                              title: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    itemList[index].name,
-                                    style: Theme.of(context).textTheme.titleLarge,
-                                  ),
-                                  SizedBox(height: 5.0),
-                                  Text(
-                                    '${formatDateString(itemList[index].timeStart)}-${formatDateStringToHours(itemList[index].timeEnd)}',
-                                    style: Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                ],
+                              ListTile(
+                                contentPadding: const EdgeInsets.all(10.0),
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      itemList[index].name,
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
+                                    SizedBox(height: 5.0),
+                                    Text(
+                                      '${formatDateString(itemList[index].timeStart)}-${formatDateStringToHours(itemList[index].timeEnd)}',
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 8.0), // Add space between list elements
-                ],
-              );
-            },
+                    SizedBox(height: 8.0), // Add space between list elements
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RaceParticipation(),
-          ),
-        );
-      },
-      label: Text('Rozpocznij wyścig'),
-      icon: Icon(Icons.pedal_bike),
-    ),
-  );
-}
+      bottomNavigationBar: BottomNavigationBarWidget(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+          // Handle navigation based on index
+          switch (currentIndex) {
+            case 0:
+            // Wyścigi
+              break;
+            case 1:
+            // Ranking
+              Navigator.pushReplacementNamed(context, '/ranking');
+              break;
+            case 2:
+            // Aktualny wyścig
+              Navigator.pushReplacementNamed(context, '/race_participation');
+              break;
+            case 3:
+            // Mój profil
+              Navigator.pushReplacementNamed(context, '/user_profile');
+              break;
+          }
+        },
+      ),
+    );
+  }
 }
 
 class Race {

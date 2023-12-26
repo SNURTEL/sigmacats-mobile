@@ -17,3 +17,11 @@ String formatDateStringToHours(String dateString) {
   String formattedDate = DateFormat('HH:mm').format(dateTime);
   return formattedDate;
 }
+
+bool isToday(String dateString) {
+  DateTime today = DateTime.now();
+  DateTime raceDate = DateTime.parse(dateString);
+  return today.year == raceDate.year &&
+      today.month == raceDate.month &&
+      today.day == raceDate.day;
+}

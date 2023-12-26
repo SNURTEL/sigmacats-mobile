@@ -35,7 +35,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> fetchRaceDetails() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}?rider_id=1'));
+    final response = await http.get(Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}?rider_id=1'));
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the race details
@@ -68,7 +68,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/rider/bike/?rider_id=1'));
+    final response = await http.get(Uri.parse('http://10.0.2.2:80/api/rider/bike/?rider_id=1'));
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the bike names and ids
@@ -91,7 +91,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> joinRace(int bikeId) async {
     final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/join?rider_id=1&bike_id=$bikeId'));
+        Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/join?rider_id=1&bike_id=$bikeId'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -105,7 +105,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> withdrawFromRace() async {
     final response =
-    await http.post(Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/withdraw?rider_id=1'));
+    await http.post(Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/withdraw?rider_id=1'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -231,12 +231,12 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
-              if (status != 'ended') const SizedBox(height: 60.0),  // Add SizedBox conditionally
+              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),  // Add SizedBox conditionally
             ],
           ),
         ),
       ),
-      floatingActionButton: status == 'ended'
+      floatingActionButton: status == 'ended' || status == 'cancelled'
           ? null  // Set onPressed to null when status is 'ended'
           : isParticipating
           ? FloatingActionButton.extended(
@@ -258,7 +258,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   void showAddTextDialog(BuildContext context) async {
     // Fetch bike names before showing the dialog
-    final bikeNames = await fetchBikeNames();
+    fetchBikeNames();
     showDialog(
       context: context,
       builder: (BuildContext context) {
