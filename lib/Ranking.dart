@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'BottomNavigationBar.dart';
 
 class Ranking extends StatefulWidget {
-  const Ranking({Key? key}) : super(key: key);
+  final String accessToken;
+  const Ranking({Key? key, required this.accessToken}) : super(key: key);
 
 @override
 _RankingState createState() => _RankingState();
@@ -32,18 +33,18 @@ class _RankingState extends State<Ranking> {
           switch (currentIndex) {
             case 0:
             // Wyścigi
-              Navigator.pushReplacementNamed(context, '/race_list');
+              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
               break;
             case 1:
             // Ranking
               break;
             case 2:
             // Aktualny wyścig
-              Navigator.pushReplacementNamed(context, '/race_participation');
+              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
             // Mój profil
-              Navigator.pushReplacementNamed(context, '/user_profile');
+              Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
           }
         },

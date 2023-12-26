@@ -28,22 +28,26 @@ class App extends StatelessWidget {
             builder = (context) => const HomePage();
             break;
           case '/login':
-            builder = (context) => const LoginPage();
+            builder = (context) => LoginPage();
             break;
           case '/register':
             builder = (context) => const RegistrationPage();
             break;
           case '/race_list':
-            builder = (context) => RaceList();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => RaceList(accessToken: accessToken);
             break;
           case '/ranking':
-            builder = (context) => Ranking();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => Ranking(accessToken: accessToken);
             break;
           case '/race_participation':
-            builder = (context) => RaceParticipation();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => RaceParticipation(accessToken: accessToken);
             break;
           case '/user_profile':
-            builder = (context) => UserProfile();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => UserProfile(accessToken: accessToken);
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');

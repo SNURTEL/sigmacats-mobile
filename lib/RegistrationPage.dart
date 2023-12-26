@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sigmactas_alleycat/HomePage.dart';
 import 'RaceList.dart';
 
 class RegistrationPage extends StatelessWidget {
@@ -125,7 +126,7 @@ class RegistrationPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RaceList(),
+                      builder: (context) => const HomePage(),
                     ),
                   );
                 },

@@ -6,7 +6,9 @@ import 'functions.dart';
 import 'BottomNavigationBar.dart';
 
 class RaceList extends StatefulWidget {
-  const RaceList({Key? key}) : super(key: key);
+  final String accessToken;
+
+  const RaceList({Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _RaceListState createState() => _RaceListState();
@@ -25,7 +27,9 @@ class _RaceListState extends State<RaceList> {
 
   Future<void> fetchRaceList() async {
     final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/race/?rider_id=1'));
+      Uri.parse('http://10.0.2.2:8000/api/rider/race/'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the races from the response
@@ -62,7 +66,7 @@ class _RaceListState extends State<RaceList> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RaceDetails(itemList[index].id),
+                            builder: (context) => RaceDetails(itemList[index].id, accessToken: widget.accessToken,),
                           ),
                         );
                       },
@@ -131,15 +135,15 @@ class _RaceListState extends State<RaceList> {
               break;
             case 1:
             // Ranking
-              Navigator.pushReplacementNamed(context, '/ranking');
+              Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
               break;
             case 2:
             // Aktualny wyścig
-              Navigator.pushReplacementNamed(context, '/race_participation');
+              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
             // Mój profil
-              Navigator.pushReplacementNamed(context, '/user_profile');
+              Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
           }
         },

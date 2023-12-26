@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 import 'functions.dart';
 
 class RaceParticipation extends StatefulWidget {
-  const RaceParticipation({Key? key}) : super(key: key);
+  final String accessToken;
+  const RaceParticipation({Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _RaceParticipationState createState() => _RaceParticipationState();
@@ -28,7 +29,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Future<void> fetchRaceList() async {
     final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/race/?rider_id=1'));
+      Uri.parse('http://10.0.2.2:8000/api/rider/race/'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the races from the response
@@ -91,18 +94,18 @@ class _RaceParticipationState extends State<RaceParticipation> {
           switch (currentIndex) {
             case 0:
             // Wyścigi
-              Navigator.pushReplacementNamed(context, '/race_list');
+              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
               break;
             case 1:
             // Ranking
-              Navigator.pushReplacementNamed(context, '/ranking');
+              Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
               break;
             case 2:
             // Aktualny wyścig
               break;
             case 3:
             // Mój profil
-              Navigator.pushReplacementNamed(context, '/user_profile');
+              Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
           }
         },
@@ -176,7 +179,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            RaceDetails(itemList[nextRaceIndex].id),
+                            RaceDetails(itemList[nextRaceIndex].id, accessToken: widget.accessToken,),
                       ),
                     );
                   },
@@ -340,7 +343,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RaceDetails(race.id),
+                          builder: (context) => RaceDetails(race.id, accessToken: widget.accessToken,),
                         ),
                       );
                     },
