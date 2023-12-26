@@ -118,68 +118,160 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget buildDefaultWidget() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: double.infinity,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Na dzisiaj nie masz zaplanowanych żadnych wyścigów',
-                        style: Theme.of(context).textTheme.headlineLarge,
-                        textAlign: TextAlign.center,
+    int nextRaceIndex = findNextRaceIndex();
+
+    // Display message if no race is found
+    return Container(
+      alignment: Alignment.bottomCenter, // Align the widget to the bottom center
+      height: MediaQuery.of(context).size.height - 3*AppBar().preferredSize.height,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: double.infinity,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Na dzisiaj nie masz zaplanowanych żadnych wyścigów',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (nextRaceIndex != -1)
+          // Display race details
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height/8),
+                Container(
+                  width: double.infinity,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Twój najbliższy wyścig:',
+                            style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 8.0),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16.0),
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                  Theme.of(context).colorScheme.surface.withOpacity(0.62),
-                  BlendMode.srcOver,
-                ),
-                child: Image.asset(
-                  'lib/sample_image.png',
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
-            ),
-            SizedBox(height: 8.0),
-            Container(
-              width: double.infinity,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Możesz zapisać się na wyścig\nw zakładce "Wyścigi"',
-                        style: Theme.of(context).textTheme.titleLarge,
-                        textAlign: TextAlign.center,
+                SizedBox(height: 8.0),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RaceDetails(itemList[nextRaceIndex].id),
                       ),
-                    ],
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.all(5.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 90.0,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(16.0),
+                              bottomLeft: Radius.circular(16.0),
+                            ),
+                            child: Image.asset(
+                              'lib/sample_image.png',
+                              fit: BoxFit.fitHeight,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.0),
+                        Expanded(
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(10.0),
+                            title: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  itemList[nextRaceIndex].name,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  '${formatDateString(itemList[nextRaceIndex].timeStart)}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height/5),
+                Container(
+                  width: double.infinity,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Możesz zapisać się na wyścig\nw zakładce "Wyścigi"',
+                            style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        // Additional widgets for pending status if needed
-      ],
+        ],
+      ),
     );
   }
+
+
+  int findNextRaceIndex() {
+    DateTime today = DateTime.now();
+    int closestIndex = -1;
+    DateTime closestDate = today;
+
+    for (int i = 0; i < itemList.length; i++) {
+      DateTime startDate = DateTime.parse(itemList[i].timeStart);
+      if (itemList[i].userParticipating &&
+          startDate.isAfter(today) &&
+          (closestDate == today || startDate.isBefore(closestDate))) {
+        closestIndex = i;
+        closestDate = startDate;
+      }
+    }
+
+    return closestIndex;
+  }
+
 
   Widget buildTodayRaceWidget(Race race) {
     if (race.status == 'pending') {
