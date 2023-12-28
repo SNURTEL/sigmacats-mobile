@@ -1,5 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
 import 'BottomNavigationBar.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
@@ -13,11 +19,17 @@ class LocationPage extends StatefulWidget {
 }
 
 class _LocationPageState extends State<LocationPage> {
+  late String _localPath;
+  late bool _permissionReady;
+  late TargetPlatform? platform;
+
   int currentIndex = 4;
-  int num_samples = 0;
+  int numSamples = 0;
   bool isTracking = false;
+  DateTime trackingStartedTimestamp = DateTime.now();
 
   bg.Location? location;
+  List<LatLng> locationHistory = [];
 
   final mapController = MapController();
 
@@ -27,19 +39,41 @@ class _LocationPageState extends State<LocationPage> {
         // Use the recommended flutter_map_cancellable_tile_provider package to
         // support the cancellation of loading tiles.
         tileProvider: CancellableNetworkTileProvider(),
+        tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
       );
-  
-  MarkerLayer get markerLayer => MarkerLayer(
-      markers: location != null ? [Marker(
-          point: LatLng(
-            location!.coords.latitude, location!.coords.longitude
+
+  PolylineLayer get polylineLayer => PolylineLayer(
+        polylines: [
+          Polyline(
+            points: locationHistory,
+            strokeWidth: 3,
+            color: Theme.of(context).colorScheme.primary,
           ),
-          child: Icon(Icons.person))] : []
-  );
+        ],
+      );
+
+  MarkerLayer get markerLayer => MarkerLayer(
+      markers: location != null
+          ? [
+              Marker(
+                  point: LatLng(location!.coords.latitude, location!.coords.longitude),
+                  rotate: true,
+                  child: Icon(
+                    Icons.pedal_bike,
+                    color: context.isDarkMode ? Colors.white : Colors.black54,
+                  ))
+            ]
+          : []);
 
   @override
   void initState() {
     super.initState();
+
+    if (Platform.isAndroid) {
+      platform = TargetPlatform.android;
+    } else {
+      platform = TargetPlatform.iOS;
+    }
 
     ////
     // 1.  Listen to events (See docs for all 12 available events).
@@ -50,7 +84,12 @@ class _LocationPageState extends State<LocationPage> {
       print('[location] - $location');
       setState(() {
         this.location = location;
-        num_samples += 1;
+
+        final waypoint = LatLng(location.coords.latitude, location.coords.longitude);
+
+        mapController.move(waypoint, 18);
+        numSamples += 1;
+        locationHistory.add(waypoint);
       });
     });
 
@@ -102,14 +141,9 @@ class _LocationPageState extends State<LocationPage> {
                 mapController: mapController,
                 options: MapOptions(
                   initialCenter: LatLng(52.23202828872916, 21.006132649819673), // Warsaw
-                  initialZoom: 20,
-                  // interactionOptions:
-                  // InteractionOptions(flags: uploadedGpxObject != null ? InteractiveFlag.all : InteractiveFlag.none)
-                ),
-                children: [
-                  openStreetMapTileLayer,
-                  markerLayer
-                ],
+                  initialZoom: 18,
+               ),
+                children: [openStreetMapTileLayer, polylineLayer, markerLayer],
               ),
             ),
             SizedBox(
@@ -127,6 +161,7 @@ class _LocationPageState extends State<LocationPage> {
                       print('[start] success $state');
                     });
                     bg.BackgroundGeolocation.changePace(true);
+                    trackingStartedTimestamp = DateTime.now();
                   } else {
                     bg.BackgroundGeolocation.stop();
                   }
@@ -134,28 +169,43 @@ class _LocationPageState extends State<LocationPage> {
             SizedBox(
               height: 16,
             ),
-            FilledButton(
-                onPressed: () {
-                  setState(() {
-                    bg.BackgroundGeolocation.getCurrentPosition(
-                            maximumAge: 0,
-                            persist: false,
-                            // <-- do not persist this location
-                            desiredAccuracy: 0,
-                            // <-- desire best possible accuracy
-                            timeout: 30000,
-                            // <-- wait 30s before giving up.
-                            samples: 1 // <-- sample 3 location before selecting best.
-                            )
-                        .then((bg.Location location) {
-                      print('[getCurrentPosition] - $location');
-                      this.location = location;
-                    }).catchError((error) {
-                      print('[getCurrentPosition] ERROR: $error');
-                    });
-                  });
-                },
-                child: Text("Update location")),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        bg.BackgroundGeolocation.getCurrentPosition(
+                                maximumAge: 0,
+                                persist: false,
+                                // <-- do not persist this location
+                                desiredAccuracy: 0,
+                                // <-- desire best possible accuracy
+                                timeout: 30000,
+                                // <-- wait 30s before giving up.
+                                samples: 1 // <-- sample 3 location before selecting best.
+                                )
+                            .then((bg.Location location) {
+                          print('[getCurrentPosition] - $location');
+                          this.location = location;
+                        }).catchError((error) {
+                          print('[getCurrentPosition] ERROR: $error');
+                        });
+                      });
+                    },
+                    child: Text("Force update")),
+                SizedBox(
+                  width: 16,
+                ),
+                OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        locationHistory.clear();
+                      });
+                    },
+                    child: Text("Clear history")),
+              ],
+            ),
             SizedBox(
               height: 16,
             ),
@@ -171,7 +221,37 @@ class _LocationPageState extends State<LocationPage> {
             SizedBox(
               height: 16,
             ),
-            Text("Samples: ${num_samples}"),
+            Text("Samples: ${numSamples}"),
+            SizedBox(
+              height: 16,
+            ),
+            OutlinedButton(
+                onPressed: () async {
+                  _permissionReady = await _checkPermission();
+                  if (!_permissionReady) {
+                    showNotification(context, "Missing permissions");
+                    return;
+                  }
+
+                  await _prepareSaveDir();
+                  print("Saving gpx...");
+
+                  final uuid = Uuid().v1();
+                  final gpx = dumpGpx(
+                    locationHistory,
+                    uuid,
+                    "This is a test GPX file"
+                  );
+                  final writer = GpxWriter().asString(gpx, pretty: true);
+                  final path = "${_localPath}ride_$uuid";
+                  final file = File(path);
+                  file.writeAsString(writer.toString());
+                  showNotification(context, "Wrote to $path");
+                },
+                child: Text("Dump GPX")),
+            SizedBox(
+              height: 16,
+            ),
           ],
         ),
       ),
@@ -206,4 +286,85 @@ class _LocationPageState extends State<LocationPage> {
       ),
     );
   }
+
+  Future<bool> _checkPermission() async {
+    if (platform == TargetPlatform.android) {
+      final status = await Permission.storage.status;
+      if (status != PermissionStatus.granted) {
+        final result = await Permission.manageExternalStorage.request();
+        if (result == PermissionStatus.granted) {
+          return true;
+        }
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _prepareSaveDir() async {
+    _localPath = (await _findLocalPath())!;
+
+    print(_localPath);
+    final savedDir = Directory(_localPath);
+    bool hasExisted = await savedDir.exists();
+    if (!hasExisted) {
+      savedDir.create();
+    }
+  }
+
+  Future<String?> _findLocalPath() async {
+    if (platform == TargetPlatform.android) {
+      return "/sdcard/download/";
+    } else {
+      var directory = await getApplicationDocumentsDirectory();
+      return directory.path + Platform.pathSeparator + 'Download';
+    }
+  }
+
+  void showNotification(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 3),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 }
+
+Gpx dumpGpx(List<LatLng> trackpoints, [String name = "", String desc = "", DateTime? time]) {
+  time = time ?? DateTime.now();
+  final gpx = Gpx();
+  gpx.version = '1.1';
+  gpx.creator = 'sigmacats rider app';
+  gpx.metadata = Metadata();
+  gpx.metadata?.name = name;
+  gpx.metadata?.desc = desc;
+  gpx.metadata?.time = time;
+  gpx.trks = [Trk(
+    name: name,
+    type: "cycling",
+    trksegs: [
+      Trkseg(
+        trkpts: trackpoints.map(
+                (e) => Wpt(
+                  lat: e.latitude,
+                  lon: e.longitude
+                )).toList()
+      )
+    ]
+  )];
+  return gpx;
+}
+
+extension DarkMode on BuildContext {
+  /// is dark mode currently enabled?
+  bool get isDarkMode {
+    final brightness = MediaQuery.of(this).platformBrightness;
+    return brightness == Brightness.dark;
+  }
+}
+
+
