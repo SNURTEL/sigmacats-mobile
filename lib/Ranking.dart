@@ -16,12 +16,11 @@ class _RankingState extends State<Ranking> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Ranking'),
+          title: const Text('Ranking'),
           automaticallyImplyLeading: false,
           centerTitle: true,
         ),
-        body: Center(
-          // Your widgets can go here
+        body: const Center(
         ),
       bottomNavigationBar: BottomNavigationBarWidget(
         currentIndex: currentIndex,
@@ -29,21 +28,17 @@ class _RankingState extends State<Ranking> {
           setState(() {
             currentIndex = index;
           });
-          // Handle navigation based on index
           switch (currentIndex) {
             case 0:
-            // Wyścigi
               Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
               break;
             case 1:
-            // Ranking
+              // Ranking
               break;
             case 2:
-            // Aktualny wyścig
               Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
-            // Mój profil
               Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
           }

@@ -2,43 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({Key? key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _showPassword = false;
 
   Future<void> _handleLogin(BuildContext context) async {
     String username = _usernameController.text;
     String password = _passwordController.text;
-    // API endpoint for login
     final apiUrl = Uri.parse('http://10.0.2.2:8000/api/auth/jwt/login');
-
-    // Request body with username and password
-    final body = {
-      'grant_type': '',
-      'username': username,
-      'password': password,
-      'scope': '',
-      'client_id': '',
-      'client_secret': '',
-    };
 
     try {
       final response = await http.post(apiUrl, body: {'username': username, 'password': password});
 
       if (response.statusCode == 200) {
-        // Successful login, navigate to the home page
         Map<String, dynamic> responseData = json.decode(response.body);
         String accessToken = responseData['access_token'];
         Navigator.pushReplacementNamed(context, '/race_list', arguments: accessToken);
+      } else if (response.statusCode == 400){
+        showNotification(context, 'Niepoprawny adres email bądź hasło.');
       } else {
-        // Unsuccessful login, show notification
-        showNotification(context, 'Logowanie się nie powiodło');
+        showNotification(context, 'Błąd logowania.');
       }
     } catch (e) {
-      // Handle any exceptions or network errors
-      showNotification(context, 'Wystąpił błąd: $e');
+      showNotification(context, 'Wystąpił błąd.');
     }
   }
 
@@ -56,30 +51,60 @@ class LoginPage extends StatelessWidget {
           children: [
             SizedBox(
               height: 70.0,
-              child: TextField(
+              child: TextFormField(
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return "Adres email nie może być pusty.";
+                  }
+                  if (!RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                      .hasMatch(v)) {
+                    return "Niepoprawny adres email.";
+                  }
+                  return null;
+                },
                 controller: _usernameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Adres e-mail',
                   enabledBorder: OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(),
                 ),
               ),
             ),
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             SizedBox(
               height: 70.0,
-              child: TextField(
+              child: TextFormField(
+                obscureText: !_showPassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return "Hasło nie może być puste.";
+                  }
+                  if (v.length < 8) {
+                    return "Hasło musi zawierać co najmniej 8 znaków.";
+                  }
+                  return null;
+                },
                 controller: _passwordController,
-                obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Hasło',
-                  enabledBorder: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(),
+                  enabledBorder: const OutlineInputBorder(),
+                  focusedBorder: const OutlineInputBorder(),
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: IconButton(
+                        icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () {
+                          setState(() {
+                            _showPassword = !_showPassword;
+                          });
+                        },
+                      ),
+                    )
                 ),
               ),
             ),
-            SizedBox(height: 20.0),
-            ElevatedButton(
+            const SizedBox(height: 20.0),
+            FilledButton(
               onPressed: () {
                 // Call the method to handle login
                 _handleLogin(context);
@@ -92,6 +117,12 @@ class LoginPage extends StatelessWidget {
                 style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
               ),
             ),
+            const SizedBox(height: 10.0),
+            TextButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/reset_password');
+                },
+                child: const Text("Nie pamiętam hasła")),
           ],
         ),
       ),

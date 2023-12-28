@@ -21,7 +21,6 @@ class _RaceListState extends State<RaceList> {
   @override
   void initState() {
     super.initState();
-    // Fetch the list of races when the widget is created
     fetchRaceList();
   }
 
@@ -32,13 +31,11 @@ class _RaceListState extends State<RaceList> {
     );
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the races from the response
       final List<dynamic> races = json.decode(utf8.decode(response.bodyBytes));
       setState(() {
         itemList = races.map((race) => Race.fromJson(race)).toList();
       });
     } else {
-      // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load races');
     }
   }
@@ -47,14 +44,14 @@ class _RaceListState extends State<RaceList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Dostępne wyścigi'),
+        title: const Text('Dostępne wyścigi'),
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: RefreshIndicator(
-          onRefresh: fetchRaceList, // Fetch data when pulled down
+          onRefresh: fetchRaceList,
           child: Scrollbar(
             child: ListView.builder(
               itemCount: itemList.length,
@@ -78,11 +75,11 @@ class _RaceListState extends State<RaceList> {
                           margin: const EdgeInsets.all(5.0),
                           child: Column(
                             children: [
-                              Container(
+                              SizedBox(
                                 height: 160.0,
                                 width: double.infinity,
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.only(
+                                  borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(16.0),
                                     topRight: Radius.circular(16.0),
                                   ),
@@ -101,7 +98,7 @@ class _RaceListState extends State<RaceList> {
                                       itemList[index].name,
                                       style: Theme.of(context).textTheme.titleLarge,
                                     ),
-                                    SizedBox(height: 5.0),
+                                    const SizedBox(height: 5.0),
                                     Text(
                                       '${formatDateString(itemList[index].timeStart)}-${formatDateStringToHours(itemList[index].timeEnd)}',
                                       style: Theme.of(context).textTheme.bodyMedium,
@@ -114,7 +111,7 @@ class _RaceListState extends State<RaceList> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 8.0), // Add space between list elements
+                    const SizedBox(height: 8.0),
                   ],
                 );
               },
@@ -128,21 +125,17 @@ class _RaceListState extends State<RaceList> {
           setState(() {
             currentIndex = index;
           });
-          // Handle navigation based on index
           switch (currentIndex) {
             case 0:
-            // Wyścigi
+              // RaceList
               break;
             case 1:
-            // Ranking
               Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
               break;
             case 2:
-            // Aktualny wyścig
               Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
-            // Mój profil
               Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
           }
