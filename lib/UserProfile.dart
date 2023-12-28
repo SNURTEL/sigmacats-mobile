@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'BottomNavigationBar.dart';
 
 class UserProfile extends StatefulWidget {
-  const UserProfile({Key? key}) : super(key: key);
+  final String accessToken;
+  const UserProfile({Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _UserProfileState createState() => _UserProfileState();
@@ -19,8 +20,8 @@ class _UserProfileState extends State<UserProfile> {
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
-      body: Center(
-        child: const Text('User Profile Content'),
+      body: const Center(
+        child: Text('User Profile Content'),
       ),
       bottomNavigationBar: BottomNavigationBarWidget(
         currentIndex: currentIndex,
@@ -28,22 +29,18 @@ class _UserProfileState extends State<UserProfile> {
           setState(() {
             currentIndex = index;
           });
-          // Handle navigation based on index
           switch (currentIndex) {
             case 0:
-            // Wyścigi
-              Navigator.pushReplacementNamed(context, '/race_list');
+              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
               break;
             case 1:
-            // Ranking
-              Navigator.pushReplacementNamed(context, '/ranking');
+              Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
               break;
             case 2:
-            // Aktualny wyścig
-              Navigator.pushReplacementNamed(context, '/race_participation');
+              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
-            // Mój profil
+              // UserProfile
               break;
           }
         },

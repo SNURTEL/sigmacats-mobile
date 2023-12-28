@@ -7,6 +7,7 @@ import 'RaceList.dart';
 import 'Ranking.dart';
 import 'RaceParticipation.dart';
 import 'UserProfile.dart';
+import 'ForgotPasswordPage.dart';
 
 void main() {
   runApp(const App());
@@ -30,20 +31,27 @@ class App extends StatelessWidget {
           case '/login':
             builder = (context) => const LoginPage();
             break;
+          case '/reset_password':
+            builder = (context) => const ForgotPasswordPage();
+            break;
           case '/register':
             builder = (context) => const RegistrationPage();
             break;
           case '/race_list':
-            builder = (context) => RaceList();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => RaceList(accessToken: accessToken);
             break;
           case '/ranking':
-            builder = (context) => Ranking();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => Ranking(accessToken: accessToken);
             break;
           case '/race_participation':
-            builder = (context) => RaceParticipation();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => RaceParticipation(accessToken: accessToken);
             break;
           case '/user_profile':
-            builder = (context) => UserProfile();
+            final String accessToken = settings.arguments as String;
+            builder = (context) => UserProfile(accessToken: accessToken);
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');

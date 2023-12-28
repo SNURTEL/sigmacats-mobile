@@ -18,12 +18,12 @@ class HomePage extends StatelessWidget {
               style: TextStyle(fontSize: 50.0, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 100.0),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/login');
               },
               style: ElevatedButton.styleFrom(
-                fixedSize: const Size(double.infinity, 50.0), // Set the height to 50.0
+                fixedSize: const Size(double.infinity, 50.0),
               ),
               child: const Text(
                   'Zaloguj się',
@@ -36,12 +36,12 @@ class HomePage extends StatelessWidget {
               style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20.0),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/register');
               },
               style: ElevatedButton.styleFrom(
-                fixedSize: const Size(double.infinity, 50.0), // Set the height to 50.0
+                fixedSize: const Size(double.infinity, 50.0),
               ),
               child: const Text(
                   'Zarejestruj się',

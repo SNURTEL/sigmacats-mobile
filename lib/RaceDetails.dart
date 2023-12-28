@@ -5,8 +5,9 @@ import 'functions.dart';
 
 class RaceDetails extends StatefulWidget {
   final int id;
+  final String accessToken;
 
-  const RaceDetails(this.id, {Key? key}) : super(key: key);
+  const RaceDetails(this.id, {Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _RaceDetailsState createState() => _RaceDetailsState();
@@ -30,21 +31,18 @@ class _RaceDetailsState extends State<RaceDetails> {
   @override
   void initState() {
     super.initState();
-    // Fetch additional details for the race when the widget is created
     fetchRaceDetails();
   }
 
   Future<void> fetchRaceDetails() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}?rider_id=1'));
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the race details
       final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
-
-      // Extract participation status from the response
       final String? participationStatus = raceDetails['participation_status'];
-
-      // Check if the user is participating
       final bool userParticipating = participationStatus != null;
 
       setState(() {
@@ -62,16 +60,17 @@ class _RaceDetailsState extends State<RaceDetails> {
         isParticipating = userParticipating;
       });
     } else {
-      // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load race details');
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:80/api/rider/bike/?rider_id=1'));
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:80/api/rider/bike/'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the bike names and ids
       final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
           .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
@@ -79,19 +78,20 @@ class _RaceDetailsState extends State<RaceDetails> {
       setState(() {
         bikes = bikesData;
         if (bikes.isNotEmpty) {
-          selectedValue = bikes[0]['name']; // Set the default selected bike
+          selectedValue = bikes[0]['name'];
         }
       });
       return bikesData;
     } else {
-      // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load bike names');
     }
   }
 
   Future<void> joinRace(int bikeId) async {
     final response = await http.post(
-        Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/join?rider_id=1&bike_id=$bikeId'));
+      Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
       setState(() {
@@ -99,13 +99,15 @@ class _RaceDetailsState extends State<RaceDetails> {
       });
       showNotification(context, 'Udało się zapisać na wyścig!');
     } else {
-      showNotification(context, 'Błąd podczas zapisywania na wyścig');
+      showNotification(context, 'Błąd podczas zapisywania na wyścig ${response.statusCode}');
     }
   }
 
   Future<void> withdrawFromRace() async {
-    final response =
-    await http.post(Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/withdraw?rider_id=1'));
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/withdraw'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
 
     if (response.statusCode == 200) {
       setState(() {
@@ -129,16 +131,14 @@ class _RaceDetailsState extends State<RaceDetails> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(16.0),
                 child: Image.asset(
                   'lib/sample_image.png',
-                  fit: BoxFit.fitWidth, // Ensure the image fills the container
+                  fit: BoxFit.fitWidth,
                 ),
               ),
               const SizedBox(height: 5.0),
-              // Card with race name and meetupTimestamp
               Card(
                 child: ListTile(
                   title: Text(
@@ -151,7 +151,6 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
-              // Two separate cards for entryFeeGr and numberOfLaps (each taking half width)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -190,8 +189,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ],
               ),
               const SizedBox(height: 5.0),
-              // Card with requirements (full width)
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: Card(
                   child: Padding(
@@ -211,8 +209,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
-              // Card with raceDescription (full width)
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: Card(
                   child: Padding(
@@ -231,13 +228,13 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
-              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),  // Add SizedBox conditionally
+              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),
             ],
           ),
         ),
       ),
       floatingActionButton: status == 'ended' || status == 'cancelled'
-          ? null  // Set onPressed to null when status is 'ended'
+          ? null
           : isParticipating
           ? FloatingActionButton.extended(
             onPressed: () {
@@ -257,7 +254,6 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   void showAddTextDialog(BuildContext context) async {
-    // Fetch bike names before showing the dialog
     fetchBikeNames();
     showDialog(
       context: context,
@@ -289,16 +285,15 @@ class _RaceDetailsState extends State<RaceDetails> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context); // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: const Text('Anuluj'),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          // Get the selected bike id based on the name
                           final selectedBikeId = getSelectedBikeId(selectedValue);
                           joinRace(selectedBikeId);
-                          Navigator.pop(context); // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: const Text('Accept'),
                       ),
