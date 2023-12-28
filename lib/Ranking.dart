@@ -46,6 +46,9 @@ class _RankingState extends State<Ranking> {
             // Mój profil
               Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
+            case 4:
+              Navigator.pushReplacementNamed(context, '/location', arguments: widget.accessToken);
+              break;
           }
         },
       ),

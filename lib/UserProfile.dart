@@ -46,6 +46,9 @@ class _UserProfileState extends State<UserProfile> {
             case 3:
             // Mój profil
               break;
+            case 4:
+              Navigator.pushReplacementNamed(context, '/location', arguments: widget.accessToken);
+              break;
           }
         },
       ),
