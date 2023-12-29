@@ -4,6 +4,10 @@ import 'BottomNavigationBar.dart';
 import 'RaceDetails.dart';
 import 'package:http/http.dart' as http;
 import 'functions.dart';
+import 'package:gpx/gpx.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'package:latlong2/latlong.dart';
 
 class RaceParticipation extends StatefulWidget {
   final String accessToken;
@@ -19,11 +23,38 @@ class _RaceParticipationState extends State<RaceParticipation> {
   int currentIndex = 2;
   bool raceStarted = false;
   List<Race> itemList = [];
+  String gpxMapLink = '';
+  List<LatLng> points = [];
+  late List<Wpt> pointsWpt;
+  final mapController = MapController();
+
+  TileLayer get openStreetMapTileLayer => TileLayer(
+    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+    // Use the recommended flutter_map_cancellable_tile_provider package to
+    // support the cancellation of loading tiles.
+    tileProvider: CancellableNetworkTileProvider(),
+    tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
+  );
 
   @override
   void initState() {
     super.initState();
     fetchRaceList();
+  }
+
+  @override
+  void dispose() {
+    mapController.dispose();
+    super.dispose();
+  }
+
+  void fitMap() {
+    mapController.fitCamera(
+      CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
+          padding: const EdgeInsets.all(32)),
+    );
   }
 
   Future<void> fetchRaceList() async {
@@ -39,6 +70,47 @@ class _RaceParticipationState extends State<RaceParticipation> {
       });
     } else {
       throw Exception('Failed to load races');
+    }
+  }
+
+  Future<void> fetchRaceDetails(int id) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/rider/race/$id'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
+      if(raceDetails['checkpoints_gpx_file'].contains("/")) {
+        gpxMapLink = raceDetails['checkpoints_gpx_file'];
+        fetchGpxMap();
+      }
+    } else {
+      throw Exception('Failed to load race details');
+    }
+  }
+
+  Future<void> fetchGpxMap() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2$gpxMapLink'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        Gpx gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
+        pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
+        points = gpxMap.trks.first.trksegs.first.trkpts
+            .where((element) =>
+        element.lat != null &&
+            element.lon != null &&
+            element.lat!.isFinite &&
+            element.lon!.isFinite)
+            .map((e) => LatLng(e.lat!, e.lon!))
+            .toList();
+        fitMap();
+      });
+    } else {
+      throw Exception('Failed to load GPX map');
     }
   }
 
@@ -176,18 +248,24 @@ class _RaceParticipationState extends State<RaceParticipation> {
                       children: [
                         SizedBox(
                           height: 90.0,
+                          width: 100.0,
                           child: ClipRRect(
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(16.0),
                               bottomLeft: Radius.circular(16.0),
                             ),
-                            child: Image.asset(
+                            child: itemList[nextRaceIndex].eventGraphic.contains("/")
+                                ? Image.network(
+                              'http://10.0.2.2${itemList[nextRaceIndex].eventGraphic}',
+                              fit: BoxFit.fitHeight,
+                            )
+                                : Image.asset(
                               'lib/sample_image.png',
                               fit: BoxFit.fitHeight,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8.0),
+                        const SizedBox(width: 5.0),
                         Expanded(
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(10.0),
@@ -197,6 +275,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
                                 Text(
                                   itemList[nextRaceIndex].name,
                                   style: Theme.of(context).textTheme.titleLarge,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text(
@@ -263,6 +343,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
 
   Widget buildTodayRaceWidget(Race race) {
+    fetchRaceDetails(race.id);
     if (race.status == 'pending') {
       DateTime startTime = DateTime.parse(race.timeStart);
 
@@ -289,16 +370,34 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     ),
                   ),
                   const SizedBox(height: 8.0),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16.0),
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
+                  SizedBox(
+                    height: 300.0,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16.0),
+                      child: ColorFiltered(colorFilter: ColorFilter.mode(
                         Theme.of(context).colorScheme.surface.withOpacity(0.62),
                         BlendMode.srcOver,
                       ),
-                      child: Image.asset(
-                        'lib/sample_image.png',
-                        fit: BoxFit.fitWidth,
+                        child: FlutterMap(
+                          mapController: mapController,
+                          options: MapOptions(
+                              initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                              initialZoom: 13,
+                              interactionOptions:
+                              InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                          children: [
+                            openStreetMapTileLayer,
+                            PolylineLayer(
+                              polylines: [
+                                Polyline(
+                                  points: points,
+                                  strokeWidth: 3,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -362,11 +461,30 @@ class _RaceParticipationState extends State<RaceParticipation> {
                 ),
               ),
               const SizedBox(height: 16.0),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.0),
-                child: Image.asset(
-                  'lib/sample_image.png',
-                  fit: BoxFit.fitWidth,
+              SizedBox(
+                height: 300.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16.0),
+                  child: FlutterMap(
+                      mapController: mapController,
+                      options: MapOptions(
+                          initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                          initialZoom: 13,
+                          interactionOptions:
+                          InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                      children: [
+                        openStreetMapTileLayer,
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: points,
+                              strokeWidth: 3,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                 ),
               ),
               const SizedBox(height: 16.0),
@@ -501,11 +619,12 @@ class Race {
   final int id;
   final String name;
   final String status;
+  final String eventGraphic;
   final String timeStart;
   final String timeMeetUp;
   final bool userParticipating;
 
-  Race({required this.id, required this.name, required this.status, required this.timeStart, required this.timeMeetUp, required this.userParticipating});
+  Race({required this.id, required this.name, required this.status, required this.eventGraphic, required this.timeStart, required this.timeMeetUp, required this.userParticipating});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
@@ -521,6 +640,7 @@ class Race {
       id: json['id'],
       name: json['name'],
       status: json['status'],
+      eventGraphic: json['event_graphic_file'],
       timeStart: json['start_timestamp'],
       timeMeetUp: meetupTimestamp,
       userParticipating: participating,
