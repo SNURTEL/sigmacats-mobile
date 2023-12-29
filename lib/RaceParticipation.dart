@@ -176,18 +176,24 @@ class _RaceParticipationState extends State<RaceParticipation> {
                       children: [
                         SizedBox(
                           height: 90.0,
+                          width: 100.0,
                           child: ClipRRect(
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(16.0),
                               bottomLeft: Radius.circular(16.0),
                             ),
-                            child: Image.asset(
+                            child: itemList[nextRaceIndex].eventGraphic.contains("/")
+                                ? Image.network(
+                              'http://10.0.2.2${itemList[nextRaceIndex].eventGraphic}',
+                              fit: BoxFit.fitHeight,
+                            )
+                                : Image.asset(
                               'lib/sample_image.png',
                               fit: BoxFit.fitHeight,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8.0),
+                        const SizedBox(width: 5.0),
                         Expanded(
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(10.0),
@@ -197,6 +203,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
                                 Text(
                                   itemList[nextRaceIndex].name,
                                   style: Theme.of(context).textTheme.titleLarge,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text(
@@ -501,11 +509,12 @@ class Race {
   final int id;
   final String name;
   final String status;
+  final String eventGraphic;
   final String timeStart;
   final String timeMeetUp;
   final bool userParticipating;
 
-  Race({required this.id, required this.name, required this.status, required this.timeStart, required this.timeMeetUp, required this.userParticipating});
+  Race({required this.id, required this.name, required this.status, required this.eventGraphic, required this.timeStart, required this.timeMeetUp, required this.userParticipating});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
@@ -521,6 +530,7 @@ class Race {
       id: json['id'],
       name: json['name'],
       status: json['status'],
+      eventGraphic: json['event_graphic_file'],
       timeStart: json['start_timestamp'],
       timeMeetUp: meetupTimestamp,
       userParticipating: participating,

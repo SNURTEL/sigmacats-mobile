@@ -83,7 +83,12 @@ class _RaceListState extends State<RaceList> {
                                     topLeft: Radius.circular(16.0),
                                     topRight: Radius.circular(16.0),
                                   ),
-                                  child: Image.asset(
+                                  child: itemList[index].eventGraphic.contains("/")
+                                      ? Image.network(
+                                    'http://10.0.2.2${itemList[index].eventGraphic}',
+                                    fit: BoxFit.fitWidth,
+                                  )
+                                      : Image.asset(
                                     'lib/sample_image.png',
                                     fit: BoxFit.fitWidth,
                                   ),
@@ -149,16 +154,18 @@ class Race {
   final int id;
   final String name;
   final String status;
+  final String eventGraphic;
   final String timeStart;
   final String timeEnd;
 
-  Race({required this.id, required this.name, required this.status, required this.timeStart, required this.timeEnd});
+  Race({required this.id, required this.name, required this.status, required this.eventGraphic, required this.timeStart, required this.timeEnd});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     return Race(
       id: json['id'],
       name: json['name'],
       status: json['status'],
+      eventGraphic: json['event_graphic_file'],
       timeStart: json['start_timestamp'],
       timeEnd: json['end_timestamp'],
     );

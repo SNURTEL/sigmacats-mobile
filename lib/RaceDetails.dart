@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'functions.dart';
+import 'package:gpx/gpx.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'package:latlong2/latlong.dart';
 
 class RaceDetails extends StatefulWidget {
   final int id;
@@ -17,21 +21,32 @@ class _RaceDetailsState extends State<RaceDetails> {
   String selectedValue = '';
   String raceName = '';
   String status = '';
-  String requirements = '';
+  String requirements = 'null';
   String raceDescription = '';
   String meetupTimestamp = 'null';
   String startTimestamp = '2000-01-01T00:00:00';
   String endTimestamp = '2000-01-01T00:00:00';
+  String gpxMapLink = '';
+  Gpx gpxMap = Gpx();
+  List<LatLng> points = [];
+  late List<Wpt> pointsWpt;
   int numberOfLaps = 0;
   int entryFeeGr = 0;
   List<Map<String, dynamic>> bikes = [];
   String selectedBike = '';
   bool isParticipating = false;
+  final mapController = MapController();
 
   @override
   void initState() {
     super.initState();
     fetchRaceDetails();
+  }
+
+  @override
+  void dispose() {
+    mapController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchRaceDetails() async {
@@ -47,11 +62,17 @@ class _RaceDetailsState extends State<RaceDetails> {
 
       setState(() {
         raceName = raceDetails['name'];
-        requirements = raceDetails['requirements'];
+        if (raceDetails['requirements'] != null){
+          requirements = raceDetails['requirements'];
+        }
         status = raceDetails['status'];
         numberOfLaps = raceDetails['no_laps'];
         entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
+        gpxMapLink = raceDetails['checkpoints_gpx_file'];
+        if(gpxMapLink.contains("/")) {
+          fetchGpxMap();
+        }
         if (raceDetails['meetup_timestamp'] != null){
           meetupTimestamp = raceDetails['meetup_timestamp'];
         }
@@ -61,6 +82,29 @@ class _RaceDetailsState extends State<RaceDetails> {
       });
     } else {
       throw Exception('Failed to load race details');
+    }
+  }
+
+  Future<void> fetchGpxMap() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2$gpxMapLink'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
+        pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
+        points = gpxMap.trks.first.trksegs.first.trkpts
+            .where((element) =>
+        element.lat != null &&
+            element.lon != null &&
+            element.lat!.isFinite &&
+            element.lon!.isFinite)
+            .map((e) => LatLng(e.lat!, e.lon!))
+            .toList();
+      });
+    } else {
+      throw Exception('Failed to load GPX map');
     }
   }
 
@@ -119,6 +163,14 @@ class _RaceDetailsState extends State<RaceDetails> {
     }
   }
 
+  TileLayer get openStreetMapTileLayer => TileLayer(
+    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+    // Use the recommended flutter_map_cancellable_tile_provider package to
+    // support the cancellation of loading tiles.
+    tileProvider: CancellableNetworkTileProvider(),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,11 +183,30 @@ class _RaceDetailsState extends State<RaceDetails> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.0),
-                child: Image.asset(
-                  'lib/sample_image.png',
-                  fit: BoxFit.fitWidth,
+              SizedBox(
+                height: 300.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16.0),
+                  child: FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                        initialCenter: calculateCenter(), // Warsaw
+                        initialZoom: 13,
+                        interactionOptions:
+                        InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                    children: [
+                      openStreetMapTileLayer,
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: points,
+                            strokeWidth: 3,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 5.0),
@@ -188,26 +259,31 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ],
               ),
-              const SizedBox(height: 5.0),
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wymagania:',
-                          style: Theme.of(context).textTheme.labelLarge,
+              if (requirements != 'null')
+                Column(
+                  children: [
+                    const SizedBox(height: 5.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Wymagania:',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              const SizedBox(height: 5.0),
+                              Text(requirements),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 5.0),
-                        Text(requirements),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
               const SizedBox(height: 5.0),
               SizedBox(
                 width: double.infinity,
@@ -320,5 +396,40 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void fitMap() {
+    mapController.fitCamera(
+      CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
+          padding: EdgeInsets.all(32)),
+    );
+  }
+
+  LatLng calculateCenter() {
+    if (points.isEmpty) {
+      return const LatLng(52.23202828872916, 21.006132649819673);
+    }
+    double minLat = points[0].latitude;
+    double maxLat = points[0].latitude;
+    double minLon = points[0].longitude;
+    double maxLon = points[0].longitude;
+
+    for (LatLng point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLon) minLon = point.longitude;
+      if (point.longitude > maxLon) maxLon = point.longitude;
+    }
+
+    LatLngBounds boundingBox = LatLngBounds(
+      LatLng(minLat, minLon),
+      LatLng(maxLat, maxLon),
+    );
+
+    return LatLng(
+      (boundingBox.north + boundingBox.south) / 2,
+      (boundingBox.east + boundingBox.west) / 2,
+    );
   }
 }
