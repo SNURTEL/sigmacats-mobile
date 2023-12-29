@@ -102,6 +102,7 @@ class _RaceDetailsState extends State<RaceDetails> {
             element.lon!.isFinite)
             .map((e) => LatLng(e.lat!, e.lon!))
             .toList();
+        fitMap();
       });
     } else {
       throw Exception('Failed to load GPX map');
@@ -169,6 +170,7 @@ class _RaceDetailsState extends State<RaceDetails> {
     // Use the recommended flutter_map_cancellable_tile_provider package to
     // support the cancellation of loading tiles.
     tileProvider: CancellableNetworkTileProvider(),
+    tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
   );
 
   @override
@@ -190,7 +192,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                   child: FlutterMap(
                     mapController: mapController,
                     options: MapOptions(
-                        initialCenter: calculateCenter(), // Warsaw
+                        initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw,
                         initialZoom: 13,
                         interactionOptions:
                         InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
@@ -402,34 +404,15 @@ class _RaceDetailsState extends State<RaceDetails> {
     mapController.fitCamera(
       CameraFit.bounds(
           bounds: LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
-          padding: EdgeInsets.all(32)),
+          padding: const EdgeInsets.all(32)),
     );
   }
+}
 
-  LatLng calculateCenter() {
-    if (points.isEmpty) {
-      return const LatLng(52.23202828872916, 21.006132649819673);
-    }
-    double minLat = points[0].latitude;
-    double maxLat = points[0].latitude;
-    double minLon = points[0].longitude;
-    double maxLon = points[0].longitude;
-
-    for (LatLng point in points) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLon) minLon = point.longitude;
-      if (point.longitude > maxLon) maxLon = point.longitude;
-    }
-
-    LatLngBounds boundingBox = LatLngBounds(
-      LatLng(minLat, minLon),
-      LatLng(maxLat, maxLon),
-    );
-
-    return LatLng(
-      (boundingBox.north + boundingBox.south) / 2,
-      (boundingBox.east + boundingBox.west) / 2,
-    );
+extension DarkMode on BuildContext {
+  /// is dark mode currently enabled?
+  bool get isDarkMode {
+    final brightness = MediaQuery.of(this).platformBrightness;
+    return brightness == Brightness.dark;
   }
 }
