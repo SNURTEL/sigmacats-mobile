@@ -89,7 +89,7 @@ class _LocationPageState extends State<LocationPage> {
         mapController.fitCamera(CameraFit.coordinates(
             coordinates: [waypoint],
           padding: const EdgeInsets.all(32),
-          maxZoom: 17,
+          maxZoom: 18,
           minZoom: 14,
           forceIntegerZoomLevel: false
         ));
