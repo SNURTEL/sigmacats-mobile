@@ -2,43 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({Key? key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
 
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _showPassword = false;
 
   Future<void> _handleLogin(BuildContext context) async {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-    // API endpoint for login
-    final apiUrl = Uri.parse('http://10.0.2.2:8000/api/auth/jwt/login');
+    if (_formKey.currentState?.validate() ?? false) {
+      String username = _usernameController.text;
+      String password = _passwordController.text;
+      final apiUrl = Uri.parse('http://10.0.2.2:8000/api/auth/jwt/login');
 
-    // Request body with username and password
-    final body = {
-      'grant_type': '',
-      'username': username,
-      'password': password,
-      'scope': '',
-      'client_id': '',
-      'client_secret': '',
-    };
+      try {
+        final response = await http.post(apiUrl, body: {'username': username, 'password': password});
 
-    try {
-      final response = await http.post(apiUrl, body: {'username': username, 'password': password});
-
-      if (response.statusCode == 200) {
-        // Successful login, navigate to the home page
-        Map<String, dynamic> responseData = json.decode(response.body);
-        String accessToken = responseData['access_token'];
-        Navigator.pushReplacementNamed(context, '/race_list', arguments: accessToken);
-      } else {
-        // Unsuccessful login, show notification
-        showNotification(context, 'Logowanie się nie powiodło');
+        if (response.statusCode == 200) {
+          Map<String, dynamic> responseData = json.decode(response.body);
+          String accessToken = responseData['access_token'];
+          Navigator.pushReplacementNamed(context, '/race_list', arguments: accessToken);
+        } else if (response.statusCode == 400) {
+          showNotification(context, 'Niepoprawny adres email bądź hasło.');
+        } else {
+          showNotification(context, 'Błąd logowania.');
+        }
+      } catch (e) {
+        showNotification(context, 'Wystąpił błąd.');
       }
-    } catch (e) {
-      // Handle any exceptions or network errors
-      showNotification(context, 'Wystąpił błąd: $e');
     }
   }
 
@@ -50,49 +47,84 @@ class LoginPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: 70.0,
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Adres e-mail',
-                  enabledBorder: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Flexible(
+                child: TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Adres email nie może być pusty.";
+                    }
+                    if (!RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                        .hasMatch(value)) {
+                      return "Niepoprawny adres email.";
+                    }
+                    return null;
+                  },
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Adres e-mail',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 20.0),
-            SizedBox(
-              height: 70.0,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Hasło',
-                  enabledBorder: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(),
+              const SizedBox(height: 20.0),
+              Flexible(
+                child: TextFormField(
+                  obscureText: !_showPassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Hasło nie może być puste.";
+                    }
+                    if (value.length < 8) {
+                      return "Hasło musi zawierać co najmniej 8 znaków.";
+                    }
+                    return null;
+                  },
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Hasło',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: IconButton(
+                        icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () {
+                          setState(() {
+                            _showPassword = !_showPassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 20.0),
-            ElevatedButton(
-              onPressed: () {
-                // Call the method to handle login
-                _handleLogin(context);
-              },
-              style: ElevatedButton.styleFrom(
-                fixedSize: const Size(double.infinity, 50.0),
+              const SizedBox(height: 20.0),
+              FilledButton(
+                onPressed: () {
+                  _handleLogin(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(double.infinity, 50.0),
+                ),
+                child: const Text(
+                  'Zaloguj się',
+                  style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                ),
               ),
-              child: const Text(
-                'Zaloguj się',
-                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+              const SizedBox(height: 10.0),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/reset_password');
+                },
+                child: const Text("Nie pamiętam hasła"),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

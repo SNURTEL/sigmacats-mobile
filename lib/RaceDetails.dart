@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'functions.dart';
+import 'package:gpx/gpx.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'package:latlong2/latlong.dart';
 
 class RaceDetails extends StatefulWidget {
   final int id;
@@ -17,22 +21,32 @@ class _RaceDetailsState extends State<RaceDetails> {
   String selectedValue = '';
   String raceName = '';
   String status = '';
-  String requirements = '';
+  String requirements = 'null';
   String raceDescription = '';
   String meetupTimestamp = 'null';
   String startTimestamp = '2000-01-01T00:00:00';
   String endTimestamp = '2000-01-01T00:00:00';
+  String gpxMapLink = '';
+  Gpx gpxMap = Gpx();
+  List<LatLng> points = [];
+  late List<Wpt> pointsWpt;
   int numberOfLaps = 0;
   int entryFeeGr = 0;
   List<Map<String, dynamic>> bikes = [];
   String selectedBike = '';
   bool isParticipating = false;
+  final mapController = MapController();
 
   @override
   void initState() {
     super.initState();
-    // Fetch additional details for the race when the widget is created
     fetchRaceDetails();
+  }
+
+  @override
+  void dispose() {
+    mapController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchRaceDetails() async {
@@ -42,22 +56,23 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the race details
       final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
-
-      // Extract participation status from the response
       final String? participationStatus = raceDetails['participation_status'];
-
-      // Check if the user is participating
       final bool userParticipating = participationStatus != null;
 
       setState(() {
         raceName = raceDetails['name'];
-        requirements = raceDetails['requirements'];
+        if (raceDetails['requirements'] != null){
+          requirements = raceDetails['requirements'];
+        }
         status = raceDetails['status'];
         numberOfLaps = raceDetails['no_laps'];
         entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
+        gpxMapLink = raceDetails['checkpoints_gpx_file'];
+        if(gpxMapLink.contains("/")) {
+          fetchGpxMap();
+        }
         if (raceDetails['meetup_timestamp'] != null){
           meetupTimestamp = raceDetails['meetup_timestamp'];
         }
@@ -66,8 +81,31 @@ class _RaceDetailsState extends State<RaceDetails> {
         isParticipating = userParticipating;
       });
     } else {
-      // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load race details');
+    }
+  }
+
+  Future<void> fetchGpxMap() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2$gpxMapLink'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
+        pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
+        points = gpxMap.trks.first.trksegs.first.trkpts
+            .where((element) =>
+        element.lat != null &&
+            element.lon != null &&
+            element.lat!.isFinite &&
+            element.lon!.isFinite)
+            .map((e) => LatLng(e.lat!, e.lon!))
+            .toList();
+        fitMap();
+      });
+    } else {
+      throw Exception('Failed to load GPX map');
     }
   }
 
@@ -78,7 +116,6 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
 
     if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the bike names and ids
       final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
           .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
@@ -86,12 +123,11 @@ class _RaceDetailsState extends State<RaceDetails> {
       setState(() {
         bikes = bikesData;
         if (bikes.isNotEmpty) {
-          selectedValue = bikes[0]['name']; // Set the default selected bike
+          selectedValue = bikes[0]['name'];
         }
       });
       return bikesData;
     } else {
-      // If the server did not return a 200 OK response, throw an exception.
       throw Exception('Failed to load bike names');
     }
   }
@@ -128,6 +164,15 @@ class _RaceDetailsState extends State<RaceDetails> {
     }
   }
 
+  TileLayer get openStreetMapTileLayer => TileLayer(
+    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+    // Use the recommended flutter_map_cancellable_tile_provider package to
+    // support the cancellation of loading tiles.
+    tileProvider: CancellableNetworkTileProvider(),
+    tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,16 +185,33 @@ class _RaceDetailsState extends State<RaceDetails> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.0),
-                child: Image.asset(
-                  'lib/sample_image.png',
-                  fit: BoxFit.fitWidth, // Ensure the image fills the container
+              SizedBox(
+                height: 300.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16.0),
+                  child: FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                        initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw,
+                        initialZoom: 13,
+                        interactionOptions:
+                        InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                    children: [
+                      openStreetMapTileLayer,
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: points,
+                            strokeWidth: 3,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 5.0),
-              // Card with race name and meetupTimestamp
               Card(
                 child: ListTile(
                   title: Text(
@@ -162,7 +224,6 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
-              // Two separate cards for entryFeeGr and numberOfLaps (each taking half width)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -200,30 +261,33 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ],
               ),
-              const SizedBox(height: 5.0),
-              // Card with requirements (full width)
-              Container(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wymagania:',
-                          style: Theme.of(context).textTheme.labelLarge,
+              if (requirements != 'null')
+                Column(
+                  children: [
+                    const SizedBox(height: 5.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Wymagania:',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              const SizedBox(height: 5.0),
+                              Text(requirements),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 5.0),
-                        Text(requirements),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
               const SizedBox(height: 5.0),
-              // Card with raceDescription (full width)
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: Card(
                   child: Padding(
@@ -242,13 +306,13 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
-              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),  // Add SizedBox conditionally
+              if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),
             ],
           ),
         ),
       ),
       floatingActionButton: status == 'ended' || status == 'cancelled'
-          ? null  // Set onPressed to null when status is 'ended'
+          ? null
           : isParticipating
           ? FloatingActionButton.extended(
             onPressed: () {
@@ -268,7 +332,6 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   void showAddTextDialog(BuildContext context) async {
-    // Fetch bike names before showing the dialog
     fetchBikeNames();
     showDialog(
       context: context,
@@ -300,16 +363,15 @@ class _RaceDetailsState extends State<RaceDetails> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context); // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: const Text('Anuluj'),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          // Get the selected bike id based on the name
                           final selectedBikeId = getSelectedBikeId(selectedValue);
                           joinRace(selectedBikeId);
-                          Navigator.pop(context); // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: const Text('Accept'),
                       ),
@@ -336,5 +398,21 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void fitMap() {
+    mapController.fitCamera(
+      CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
+          padding: const EdgeInsets.all(32)),
+    );
+  }
+}
+
+extension DarkMode on BuildContext {
+  /// is dark mode currently enabled?
+  bool get isDarkMode {
+    final brightness = MediaQuery.of(this).platformBrightness;
+    return brightness == Brightness.dark;
   }
 }

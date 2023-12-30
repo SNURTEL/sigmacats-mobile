@@ -12,6 +12,7 @@ import 'RaceList.dart';
 import 'Ranking.dart';
 import 'RaceParticipation.dart';
 import 'UserProfile.dart';
+import 'ForgotPasswordPage.dart';
 
 void main() {
   runApp(const App());
@@ -38,7 +39,10 @@ class _AppState extends State<App> {
             builder = (context) => const HomePage();
             break;
           case '/login':
-            builder = (context) => LoginPage();
+            builder = (context) => const LoginPage();
+            break;
+          case '/reset_password':
+            builder = (context) => const ForgotPasswordPage();
             break;
           case '/register':
             builder = (context) => const RegistrationPage();
