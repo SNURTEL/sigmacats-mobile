@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+
+
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
+import 'LocationPage.dart';
 import 'LoginPage.dart';
 import 'RegistrationPage.dart';
 import 'RaceList.dart';
@@ -13,9 +18,14 @@ void main() {
   runApp(const App());
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
 
+  @override
+  _AppState createState() => _AppState();
+}
+
+class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -52,6 +62,11 @@ class App extends StatelessWidget {
           case '/user_profile':
             final String accessToken = settings.arguments as String;
             builder = (context) => UserProfile(accessToken: accessToken);
+            break;
+          case '/location':
+          // final String accessToken = settings.arguments as String;
+          // builder = (context) => LocationPage(accessToken: accessToken);;
+            builder = (context) => LocationPage();
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');

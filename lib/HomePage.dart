@@ -47,6 +47,14 @@ class HomePage extends StatelessWidget {
                   'Zarejestruj się',
                   style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: () {
+                  Navigator.pushNamed(context, '/race_list', arguments: "");
+                }, child: Text("Bypass login"))
+              ],
+            )
           ],
         ),
       ),
