@@ -23,7 +23,6 @@ class _LocationPageState extends State<LocationPage> {
   late bool _permissionReady;
   late TargetPlatform? platform;
 
-  int currentIndex = 4;
   int numSamples = 0;
   bool isTracking = false;
   DateTime trackingStartedTimestamp = DateTime.now();
@@ -87,7 +86,13 @@ class _LocationPageState extends State<LocationPage> {
 
         final waypoint = LatLng(location.coords.latitude, location.coords.longitude);
 
-        mapController.move(waypoint, 18);
+        mapController.fitCamera(CameraFit.coordinates(
+            coordinates: [waypoint],
+          padding: const EdgeInsets.all(32),
+          maxZoom: 17,
+          minZoom: 14,
+          forceIntegerZoomLevel: false
+        ));
         numSamples += 1;
         locationHistory.add(waypoint);
       });
@@ -118,7 +123,6 @@ class _LocationPageState extends State<LocationPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     mapController.dispose();
   }
@@ -141,7 +145,7 @@ class _LocationPageState extends State<LocationPage> {
                 mapController: mapController,
                 options: MapOptions(
                   initialCenter: LatLng(52.23202828872916, 21.006132649819673), // Warsaw
-                  initialZoom: 18,
+                  initialZoom: 15,
                ),
                 children: [openStreetMapTileLayer, polylineLayer, markerLayer],
               ),
@@ -254,35 +258,6 @@ class _LocationPageState extends State<LocationPage> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-          // Handle navigation based on index
-          switch (currentIndex) {
-            case 0:
-              // Wyścigi
-              Navigator.pushReplacementNamed(context, '/race_list', arguments: "");
-              break;
-            case 1:
-              // Ranking
-              Navigator.pushReplacementNamed(context, '/ranking', arguments: "");
-              break;
-            case 2:
-              // Aktualny wyścig
-              Navigator.pushReplacementNamed(context, '/race_participation', arguments: "");
-              break;
-            case 3:
-              // Mój profil
-              Navigator.pushReplacementNamed(context, '/user_profile', arguments: "");
-              break;
-            case 4:
-              break;
-          }
-        },
       ),
     );
   }

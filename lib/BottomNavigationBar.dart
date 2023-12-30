@@ -30,10 +30,6 @@ class BottomNavigationBarWidget extends StatelessWidget {
           icon: Icon(Icons.person, color: currentIndex == 3 ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.primaryContainer),
           label: 'Mój profil',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.location_on_sharp, color: currentIndex == 4 ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.primaryContainer),
-          label: 'Lokalizacja',
-        ),
       ],
       currentIndex: currentIndex,
       selectedItemColor: Theme.of(context).primaryColor,

@@ -30,7 +30,7 @@ class _AppState extends State<App> {
     return MaterialApp(
       theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
-      initialRoute: '/location',
+      initialRoute: '/',
       onGenerateRoute: (settings) {
         WidgetBuilder builder;
         switch (settings.name) {
@@ -60,8 +60,8 @@ class _AppState extends State<App> {
             builder = (context) => UserProfile(accessToken: accessToken);
             break;
           case '/location':
-            // final String accessToken = settings.arguments as String;
-            // builder = (context) => LocationPage(accessToken: accessToken);;
+          // final String accessToken = settings.arguments as String;
+          // builder = (context) => LocationPage(accessToken: accessToken);;
             builder = (context) => LocationPage();
             break;
           default:

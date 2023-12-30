@@ -107,11 +107,14 @@ class _RaceParticipationState extends State<RaceParticipation> {
             // Mój profil
               Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
               break;
-            case 4:
-              Navigator.pushReplacementNamed(context, '/location', arguments: widget.accessToken);
-              break;
           }
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/location', arguments: widget.accessToken);
+          },
+        child: const Icon(Icons.location_on_sharp),
       ),
     );
   }
