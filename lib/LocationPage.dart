@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
@@ -29,6 +30,7 @@ class _LocationPageState extends State<LocationPage> {
 
   bg.Location? location;
   List<LatLng> locationHistory = [];
+  List<DateTime> locationTimestamps = [];
 
   final mapController = MapController();
 
@@ -95,6 +97,7 @@ class _LocationPageState extends State<LocationPage> {
         ));
         numSamples += 1;
         locationHistory.add(waypoint);
+        locationTimestamps.add(DateTime.parse(location.timestamp));
       });
     });
 
@@ -113,11 +116,14 @@ class _LocationPageState extends State<LocationPage> {
     //
     bg.BackgroundGeolocation.ready(bg.Config(
         desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-        distanceFilter: 0.1,
+        enableTimestampMeta: true,
+        distanceFilter: 0.1,  // set to 1m in production
         stopOnTerminate: false,
         persistMode: bg.Config.PERSIST_MODE_LOCATION,
         startOnBoot: true,
         debug: true,
+        stopOnStationary: false,
+        reset: true,
         logLevel: bg.Config.LOG_LEVEL_VERBOSE));
   }
 
@@ -205,6 +211,8 @@ class _LocationPageState extends State<LocationPage> {
                     onPressed: () {
                       setState(() {
                         locationHistory.clear();
+                        locationTimestamps.clear();
+                        numSamples = 0;
                       });
                     },
                     child: Text("Clear history")),
@@ -243,6 +251,7 @@ class _LocationPageState extends State<LocationPage> {
                   final uuid = Uuid().v1();
                   final gpx = dumpGpx(
                     locationHistory,
+                    locationTimestamps,
                     uuid,
                     "This is a test GPX file"
                   );
@@ -309,7 +318,7 @@ class _LocationPageState extends State<LocationPage> {
   }
 }
 
-Gpx dumpGpx(List<LatLng> trackpoints, [String name = "", String desc = "", DateTime? time]) {
+Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps, [String name = "", String desc = "", DateTime? time]) {
   time = time ?? DateTime.now();
   final gpx = Gpx();
   gpx.version = '1.1';
@@ -323,10 +332,11 @@ Gpx dumpGpx(List<LatLng> trackpoints, [String name = "", String desc = "", DateT
     type: "cycling",
     trksegs: [
       Trkseg(
-        trkpts: trackpoints.map(
-                (e) => Wpt(
-                  lat: e.latitude,
-                  lon: e.longitude
+        trkpts: List.generate(trackpoints.length, (i) => i).map(
+                (i) => Wpt(
+                  lat: trackpoints[i].latitude,
+                  lon: trackpoints[i].longitude,
+                  time: timestamps[i]
                 )).toList()
       )
     ]
