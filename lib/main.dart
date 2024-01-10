@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-
+import 'package:provider/provider.dart';
 
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
@@ -15,7 +15,25 @@ import 'UserProfile.dart';
 import 'ForgotPasswordPage.dart';
 
 void main() {
-  runApp(const App());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const App(),
+    ),
+  );
+}
+
+class ThemeProvider with ChangeNotifier {
+  ThemeData themeLight = ThemeData(useMaterial3: true, colorScheme: lightColorScheme);
+  ThemeData themeDark = ThemeData(useMaterial3: true, colorScheme: darkColorScheme);
+  ThemeData _themeData = ThemeData(useMaterial3: true, colorScheme: lightColorScheme);
+
+  ThemeData get themeData => _themeData;
+
+  void toggleTheme() {
+    _themeData = _themeData == themeLight ? themeDark : themeLight;
+    notifyListeners();
+  }
 }
 
 class App extends StatefulWidget {
@@ -28,8 +46,9 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
-      theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
+      theme: themeProvider.themeData,
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
       initialRoute: '/',
       onGenerateRoute: (settings) {

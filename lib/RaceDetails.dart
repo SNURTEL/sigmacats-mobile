@@ -373,7 +373,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                           joinRace(selectedBikeId);
                           Navigator.pop(context);
                         },
-                        child: const Text('Accept'),
+                        child: const Text('Zapisz'),
                       ),
                     ],
                   ),

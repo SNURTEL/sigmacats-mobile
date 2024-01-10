@@ -3,6 +3,8 @@ import 'functions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'BottomNavigationBar.dart';
+import 'main.dart';
+import 'package:provider/provider.dart';
 
 class UserProfile extends StatefulWidget {
   final String accessToken;
@@ -90,6 +92,49 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
+  Future<void> deleteBike(int bikeId) async {
+    Map data = {"is_retired": "true"};
+    var body = json.encode(data);
+    final response = await http.patch(
+      Uri.parse('http://10.0.2.2:80/api/rider/bike/$bikeId'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      await fetchUserInfo();
+      await fetchBikesDetails();
+      setState(() {});
+      showNotification(context, 'Udało się usunąć rower!');
+    } else {
+      showNotification(context, 'Błąd podczas usuwania roweru ${response.statusCode}');
+    }
+  }
+
+  Future<void> editBike(final bikeInfo) async {
+    Map data = {
+      "name": bikeInfo['name'],
+      "type": bikeInfo['type'],
+      "brand": bikeInfo['brand'],
+      "model": bikeInfo['model'],
+    };
+    var body = json.encode(data);
+    final response = await http.patch(
+      Uri.parse('http://10.0.2.2:80/api/rider/bike/${bikeInfo['id']}'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      await fetchUserInfo();
+      await fetchBikesDetails();
+      setState(() {});
+      showNotification(context, 'Udało się edytować rower!');
+    } else {
+      showNotification(context, 'Błąd podczas edytowania roweru ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +142,14 @@ class _UserProfileState extends State<UserProfile> {
         title: const Text('Mój profil'),
         automaticallyImplyLeading: false,
         centerTitle: true,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              showSettingsDialog(context);
+            },
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -151,17 +204,21 @@ class _UserProfileState extends State<UserProfile> {
                       ),
                     ),
                   ),
+                  //const Spacer(),
                   Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: SizedBox(
+                          width: 110,
+                          child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              'Płeć: $gender',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                          ],
+                                'Płeć: $gender',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -223,15 +280,7 @@ class _UserProfileState extends State<UserProfile> {
     return bikes.asMap().entries.toList().map((entry) {
       final cardId = entry.key;
       final bike = entry.value;
-      String bikeType = 'inny';
-      if(bike['type'] == 'road' || bike['type'] == 'szosa')
-        {
-          bikeType = 'szosa';
-        }
-      else if(bike['type'] == 'fixie' || bike['type'] == 'ostre koło')
-      {
-        bikeType = 'szosa';
-      }
+      Map<String, String> bikeTypesMap = {'other': 'inny', 'road': 'szosa', 'fixie': 'ostre koło'};
 
       return ExpansionPanel(
         backgroundColor: Colors.transparent,
@@ -265,16 +314,258 @@ class _UserProfileState extends State<UserProfile> {
               SizedBox(
                 width: double.infinity,
                 child: Text(
-                  'Type: $bikeType',
+                  'Type: ${bikeTypesMap[bike['type']]}',
                   //style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
+              const SizedBox(height: 5.0),
+              Row(
+                children: [
+                  FilledButton.icon(
+                    onPressed: () {
+                      showDeleteBikeDialog(context, bike['id']);
+                    },
+                    icon: const Icon(Icons.delete),
+                    label: const Text(
+                      'Usuń',
+                      //style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 10.0),
+                  FilledButton.icon(
+                    onPressed: () {
+                      showEditBikeDialog(context, bike);
+                    },
+                    icon: const Icon(Icons.edit_note),
+                    label: const Text(
+                      'Edytuj',
+                      //style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         ),
         isExpanded: isBikeExpanded[cardId] ?? false,
       );
     }).toList();
+  }
+
+  final MaterialStateProperty<Icon?> thumbIcon =
+  MaterialStateProperty.resolveWith<Icon?>(
+        (Set<MaterialState> states) {
+      if (states.contains(MaterialState.selected)) {
+        return const Icon(Icons.check);
+      }
+      return const Icon(Icons.close);
+    },
+  );
+
+  void showSettingsDialog(BuildContext context) async {
+    bool isDarkModeEnabled = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Center(
+                child: Text(
+                    'Włącz/wyłącz tryb ciemny',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Switch(
+                    thumbIcon: thumbIcon,
+                    value: isDarkModeEnabled,
+                    onChanged: (bool value) {
+                      setState(() {
+                        isDarkModeEnabled = value;
+                      });
+                      Provider.of<ThemeProvider>(context, listen: false)
+                          .toggleTheme();
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Wyjdź'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showDeleteBikeDialog(BuildContext context, int bikeId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Czy na pewno chcesz usunąć ten rower?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 16.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Anuluj'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          deleteBike(bikeId);
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Usuń'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showEditBikeDialog(BuildContext context, final bike) async {
+    TextEditingController bikeName = TextEditingController(text: bike['name']);
+    TextEditingController bikeBrand = TextEditingController(text: bike['brand']);
+    TextEditingController bikeModel = TextEditingController(text: bike['model']);
+    List<Map<String, String>> bikeTypes = [
+      {'display': 'inny', 'value': 'other'},
+      {'display': 'szosa', 'value': 'road'},
+      {'display': 'ostre koło', 'value': 'fixie'},
+    ];
+    String selectedBikeType = bike['type'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Zaktualizuj informacje o swoim rowerze'),
+              content: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child:Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Pole nie może zostać puste";
+                          }
+                          return null;
+                        },
+                        controller: bikeName,
+                        decoration: const InputDecoration(
+                          labelText: 'Nazwa',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Pole nie może zostać puste";
+                          }
+                          return null;
+                        },
+                        controller: bikeBrand,
+                        decoration: const InputDecoration(
+                          labelText: 'Marka',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Pole nie może zostać puste";
+                          }
+                          return null;
+                        },
+                        controller: bikeModel,
+                        decoration: const InputDecoration(
+                          labelText: 'Model',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 5.0),
+                      DropdownButton<String>(
+                        value: selectedBikeType,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedBikeType = value!;
+                          });
+                        },
+                        items: bikeTypes.map<DropdownMenuItem<String>>((Map<String, String> bikeType) {
+                          return DropdownMenuItem<String>(
+                            value: bikeType['value'],
+                            child: Text('${bikeType['display']}'),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 5.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          FilledButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Anuluj'),
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              bike['name'] = bikeName.text;
+                              bike['brand'] = bikeBrand.text;
+                              bike['model'] = bikeModel.text;
+                              bike['type'] = selectedBikeType;
+                              editBike(bike);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Zaktualizuj'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  void showNotification(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 3),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
 }
