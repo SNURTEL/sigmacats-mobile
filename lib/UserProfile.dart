@@ -8,7 +8,7 @@ import 'package:move_to_background/move_to_background.dart';
 class UserProfile extends StatefulWidget {
   final String accessToken;
 
-  const UserProfile({Key? key, required this.accessToken}) : super(key: key);
+  const UserProfile({super.key, required this.accessToken});
 
   @override
   _UserProfileState createState() => _UserProfileState();
@@ -148,12 +148,40 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
+  Future<void> addBike(final bikeInfo) async {
+    Map data = {
+      "name": bikeInfo['name'],
+      "type": bikeInfo['type'],
+      "brand": bikeInfo['brand'],
+      "model": bikeInfo['model'],
+    };
+    var body = json.encode(data);
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:80/api/rider/bike/create'),
+      headers: {
+        'Authorization': 'Bearer ${widget.accessToken}',
+        "Content-Type": "application/json"
+      },
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      await fetchUserInfo();
+      await fetchBikesDetails();
+      setState(() {});
+      showNotification(context, 'Udało się dodać nowy rower!');
+    } else {
+      showNotification(
+          context, 'Błąd podczas dodawania roweru ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
-        if(didPop) {
+        if (didPop) {
           return;
         }
         MoveToBackground.moveTaskToBack();
@@ -177,7 +205,7 @@ class _UserProfileState extends State<UserProfile> {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Card(
                   child: ListTile(
@@ -226,7 +254,6 @@ class _UserProfileState extends State<UserProfile> {
                         ),
                       ),
                     ),
-                    //const Spacer(),
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
@@ -267,6 +294,16 @@ class _UserProfileState extends State<UserProfile> {
                       });
                     },
                     children: buildBikeExpansionPanels(),
+                  ),
+                ),
+                const SizedBox(height: 5.0),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showAddBikeDialog(context);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Dodaj rower',
                   ),
                 ),
               ],
@@ -331,24 +368,21 @@ class _UserProfileState extends State<UserProfile> {
                 width: double.infinity,
                 child: Text(
                   'Marka: ${bike['brand']}',
-                  //style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
               SizedBox(
                 width: double.infinity,
                 child: Text(
                   'Model: ${bike['model']}',
-                  //style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
               SizedBox(
                 width: double.infinity,
                 child: Text(
                   'Type: ${bikeTypesMap[bike['type']]}',
-                  //style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
-              const SizedBox(height: 5.0),
+              const SizedBox(height: 10.0),
               Row(
                 children: [
                   FilledButton.icon(
@@ -358,10 +392,9 @@ class _UserProfileState extends State<UserProfile> {
                     icon: const Icon(Icons.delete),
                     label: const Text(
                       'Usuń',
-                      //style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(width: 10.0),
+                  const Spacer(),
                   FilledButton.icon(
                     onPressed: () {
                       showEditBikeDialog(context, bike);
@@ -369,11 +402,10 @@ class _UserProfileState extends State<UserProfile> {
                     icon: const Icon(Icons.edit_note),
                     label: const Text(
                       'Edytuj',
-                      //style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -381,16 +413,6 @@ class _UserProfileState extends State<UserProfile> {
       );
     }).toList();
   }
-
-  final MaterialStateProperty<Icon?> thumbIcon =
-      MaterialStateProperty.resolveWith<Icon?>(
-    (Set<MaterialState> states) {
-      if (states.contains(MaterialState.selected)) {
-        return const Icon(Icons.check);
-      }
-      return const Icon(Icons.close);
-    },
-  );
 
   void showDeleteBikeDialog(BuildContext context, int bikeId) async {
     showDialog(
@@ -438,11 +460,13 @@ class _UserProfileState extends State<UserProfile> {
     TextEditingController bikeModel =
         TextEditingController(text: bike['model']);
     List<Map<String, String>> bikeTypes = [
-      {'display': 'inny', 'value': 'other'},
       {'display': 'szosa', 'value': 'road'},
       {'display': 'ostre koło', 'value': 'fixie'},
+      {'display': 'inny', 'value': 'other'},
     ];
     String selectedBikeType = bike['type'];
+
+    GlobalKey<FormState> editFormKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -454,90 +478,228 @@ class _UserProfileState extends State<UserProfile> {
               content: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Pole nie może zostać puste";
-                          }
-                          return null;
-                        },
-                        controller: bikeName,
-                        decoration: const InputDecoration(
-                          labelText: 'Nazwa',
-                          border: OutlineInputBorder(),
+                  child: Form(
+                    key: editFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeName,
+                          decoration: const InputDecoration(
+                            labelText: 'Nazwa',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Pole nie może zostać puste";
-                          }
-                          return null;
-                        },
-                        controller: bikeBrand,
-                        decoration: const InputDecoration(
-                          labelText: 'Marka',
-                          border: OutlineInputBorder(),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeBrand,
+                          decoration: const InputDecoration(
+                            labelText: 'Marka',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Pole nie może zostać puste";
-                          }
-                          return null;
-                        },
-                        controller: bikeModel,
-                        decoration: const InputDecoration(
-                          labelText: 'Model',
-                          border: OutlineInputBorder(),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeModel,
+                          decoration: const InputDecoration(
+                            labelText: 'Model',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 5.0),
-                      DropdownButton<String>(
-                        value: selectedBikeType,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedBikeType = value!;
-                          });
-                        },
-                        items: bikeTypes.map<DropdownMenuItem<String>>(
+                        const SizedBox(height: 10.0),
+                        DropdownButtonFormField<String>(
+                          value: selectedBikeType,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedBikeType = value!;
+                            });
+                          },
+                          items: bikeTypes.map<DropdownMenuItem<String>>(
                             (Map<String, String> bikeType) {
-                          return DropdownMenuItem<String>(
-                            value: bikeType['value'],
-                            child: Text('${bikeType['display']}'),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 5.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          FilledButton(
-                            onPressed: () {
-                              Navigator.pop(context);
+                              return DropdownMenuItem<String>(
+                                value: bikeType['value'],
+                                child: Text('${bikeType['display']}'),
+                              );
                             },
-                            child: const Text('Anuluj'),
+                          ).toList(),
+                        ),
+                        const SizedBox(height: 30.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Anuluj'),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                if (editFormKey.currentState!.validate()) {
+                                  bike['name'] = bikeName.text;
+                                  bike['brand'] = bikeBrand.text;
+                                  bike['model'] = bikeModel.text;
+                                  bike['type'] = selectedBikeType;
+                                  editBike(bike);
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: const Text('Zaktualizuj'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showAddBikeDialog(BuildContext context) async {
+    TextEditingController bikeName = TextEditingController();
+    TextEditingController bikeBrand = TextEditingController();
+    TextEditingController bikeModel = TextEditingController();
+    List<Map<String, String>> bikeTypes = [
+      {'display': 'szosa', 'value': 'road'},
+      {'display': 'ostre koło', 'value': 'fixie'},
+      {'display': 'inny', 'value': 'other'},
+    ];
+    String selectedBikeType = 'road';
+    Map<String, String> newBikeInfo = {'name': '', 'brand': '', 'model': '', 'type': ''};
+
+    GlobalKey<FormState> addFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Uzupełnij informacje o swoim rowerze'),
+              content: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: addFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeName,
+                          decoration: const InputDecoration(
+                            labelText: 'Nazwa',
+                            border: OutlineInputBorder(),
                           ),
-                          FilledButton(
-                            onPressed: () {
-                              bike['name'] = bikeName.text;
-                              bike['brand'] = bikeBrand.text;
-                              bike['model'] = bikeModel.text;
-                              bike['type'] = selectedBikeType;
-                              editBike(bike);
-                              Navigator.pop(context);
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeBrand,
+                          decoration: const InputDecoration(
+                            labelText: 'Marka',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Pole nie może zostać puste";
+                            }
+                            return null;
+                          },
+                          controller: bikeModel,
+                          decoration: const InputDecoration(
+                            labelText: 'Model',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        DropdownButtonFormField<String>(
+                          value: selectedBikeType,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedBikeType = value!;
+                            });
+                          },
+                          items: bikeTypes.map<DropdownMenuItem<String>>(
+                            (Map<String, String> bikeType) {
+                              return DropdownMenuItem<String>(
+                                value: bikeType['value'],
+                                child: Text('${bikeType['display']}'),
+                              );
                             },
-                            child: const Text('Zaktualizuj'),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ).toList(),
+                        ),
+                        const SizedBox(height: 30.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Anuluj'),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                if (addFormKey.currentState!.validate()) {
+                                  newBikeInfo['name'] = bikeName.text;
+                                  newBikeInfo['brand'] = bikeBrand.text;
+                                  newBikeInfo['model'] = bikeModel.text;
+                                  newBikeInfo['type'] = selectedBikeType;
+                                  addBike(newBikeInfo);
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: const Text('Dodaj'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
