@@ -20,8 +20,8 @@ class _UserProfileState extends State<UserProfile> {
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
-      body: Center(
-        child: const Text('User Profile Content'),
+      body: const Center(
+        child: Text('User Profile Content'),
       ),
       bottomNavigationBar: BottomNavigationBarWidget(
         currentIndex: currentIndex,
@@ -29,22 +29,18 @@ class _UserProfileState extends State<UserProfile> {
           setState(() {
             currentIndex = index;
           });
-          // Handle navigation based on index
           switch (currentIndex) {
             case 0:
-            // Wyścigi
               Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
               break;
             case 1:
-            // Ranking
               Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
               break;
             case 2:
-            // Aktualny wyścig
               Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
               break;
             case 3:
-            // Mój profil
+              // UserProfile
               break;
           }
         },
