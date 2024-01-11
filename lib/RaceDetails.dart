@@ -41,6 +41,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   void initState() {
     super.initState();
     fetchRaceDetails();
+    fetchBikeNames();
   }
 
   @override
@@ -118,6 +119,7 @@ class _RaceDetailsState extends State<RaceDetails> {
     if (response.statusCode == 200) {
       final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
+          .where((bike) => bike['is_retired'] == false)
           .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
           .toList();
       setState(() {
@@ -343,8 +345,12 @@ class _RaceDetailsState extends State<RaceDetails> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  DropdownButton<String>(
+                  DropdownButtonFormField<String>(
                     value: selectedValue,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
                     onChanged: (value) {
                       setState(() {
                         selectedValue = value!;
@@ -361,19 +367,19 @@ class _RaceDetailsState extends State<RaceDetails> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
                         child: const Text('Anuluj'),
                       ),
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           final selectedBikeId = getSelectedBikeId(selectedValue);
                           joinRace(selectedBikeId);
                           Navigator.pop(context);
                         },
-                        child: const Text('Accept'),
+                        child: const Text('Zapisz'),
                       ),
                     ],
                   ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-
-
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
 import 'LocationPage.dart';
