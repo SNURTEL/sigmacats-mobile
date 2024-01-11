@@ -379,7 +379,7 @@ class _UserProfileState extends State<UserProfile> {
               SizedBox(
                 width: double.infinity,
                 child: Text(
-                  'Type: ${bikeTypesMap[bike['type']]}',
+                  'Typ: ${bikeTypesMap[bike['type']]}',
                 ),
               ),
               const SizedBox(height: 10.0),
