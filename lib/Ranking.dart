@@ -7,16 +7,14 @@ class Ranking extends StatefulWidget {
   final String accessToken;
   const Ranking({Key? key, required this.accessToken}) : super(key: key);
 
-@override
-_RankingState createState() => _RankingState();
+  @override
+  _RankingState createState() => _RankingState();
 }
 
 class _RankingState extends State<Ranking> {
   int currentIndex = 1;
-  int seasonID = 1; // TODO: add endpoint to get the current season
-  List<Classification> classificationsParsed = [
-    Classification(id: 1, name: 'test', description: 'test')
-  ];
+  int seasonID = 0;
+  List<Classification> classificationsParsed = [];
   String dropdownValue = 'test';
 
   Future<void> fetchClassifications() async {
@@ -37,12 +35,28 @@ class _RankingState extends State<Ranking> {
     }
   }
 
+  Future<void> fetchCurrentSeason() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/rider/season/current'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      final season = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        seasonID = Season.fromJson(season).id;
+      });
+    } else {
+      // If the server did not return a 200 OK response, throw an exception
+      throw Exception('Failed to load current season');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_){
-      //fetchClassifications();
-    });
+    fetchCurrentSeason();
+    fetchClassifications();
   }
 
   @override
@@ -127,6 +141,24 @@ class Classification {
       id: json['id'],
       name: json['name'],
       description: json['description'],
+    );
+  }
+}
+
+class Season {
+  final int id;
+  final String name;
+  final DateTime startTimestamp;
+  final DateTime endTimestamp;
+
+  Season({required this.id, required this.name, required this.startTimestamp, required this.endTimestamp});
+
+  factory Season.fromJson(Map<String, dynamic> json) {
+    return Season(
+      id: json['id'],
+      name: json['name'],
+      startTimestamp: json['start_timestamp'],
+      endTimestamp: json['end_timestamp'],
     );
   }
 }
