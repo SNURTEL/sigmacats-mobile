@@ -3,11 +3,11 @@ import 'functions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'BottomNavigationBar.dart';
-import 'main.dart';
-import 'package:provider/provider.dart';
+import 'package:move_to_background/move_to_background.dart';
 
 class UserProfile extends StatefulWidget {
   final String accessToken;
+
   const UserProfile({Key? key, required this.accessToken}) : super(key: key);
 
   @override
@@ -40,7 +40,8 @@ class _UserProfileState extends State<UserProfile> {
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> userInfo = json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> userInfo =
+          json.decode(utf8.decode(response.bodyBytes));
 
       setState(() {
         userId = userInfo['id'];
@@ -48,15 +49,12 @@ class _UserProfileState extends State<UserProfile> {
         name = userInfo['name'];
         surname = userInfo['surname'];
         email = userInfo['email'];
-        if (userInfo['gender'] == 'male')
-          {
-            gender = 'Mężczyzna';
-          }
-        else if (userInfo['gender'] == 'female')
-          {
-            gender = 'Kobieta';
-          }
-        if (userInfo['birth_date'] != null){
+        if (userInfo['gender'] == 'male') {
+          gender = 'Mężczyzna';
+        } else if (userInfo['gender'] == 'female') {
+          gender = 'Kobieta';
+        }
+        if (userInfo['birth_date'] != null) {
           birthDate = userInfo['birth_date'];
         }
       });
@@ -72,10 +70,17 @@ class _UserProfileState extends State<UserProfile> {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
+      final List<dynamic> bikeList =
+          json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
           .where((bike) => bike['is_retired'] == false)
-          .map((bike) => {'id': bike['id'], 'name': bike['name'], 'brand': bike['brand'], 'model': bike['model'], 'type': bike['type']})
+          .map((bike) => {
+                'id': bike['id'],
+                'name': bike['name'],
+                'brand': bike['brand'],
+                'model': bike['model'],
+                'type': bike['type']
+              })
           .toList();
       final Map<int, bool> initialIsBikeExpanded = {};
       int cardId = 0;
@@ -97,7 +102,10 @@ class _UserProfileState extends State<UserProfile> {
     var body = json.encode(data);
     final response = await http.patch(
       Uri.parse('http://10.0.2.2:80/api/rider/bike/$bikeId'),
-      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
+      headers: {
+        'Authorization': 'Bearer ${widget.accessToken}',
+        "Content-Type": "application/json"
+      },
       body: body,
     );
 
@@ -107,7 +115,8 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {});
       showNotification(context, 'Udało się usunąć rower!');
     } else {
-      showNotification(context, 'Błąd podczas usuwania roweru ${response.statusCode}');
+      showNotification(
+          context, 'Błąd podczas usuwania roweru ${response.statusCode}');
     }
   }
 
@@ -121,7 +130,10 @@ class _UserProfileState extends State<UserProfile> {
     var body = json.encode(data);
     final response = await http.patch(
       Uri.parse('http://10.0.2.2:80/api/rider/bike/${bikeInfo['id']}'),
-      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
+      headers: {
+        'Authorization': 'Bearer ${widget.accessToken}',
+        "Content-Type": "application/json"
+      },
       body: body,
     );
 
@@ -131,89 +143,99 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {});
       showNotification(context, 'Udało się edytować rower!');
     } else {
-      showNotification(context, 'Błąd podczas edytowania roweru ${response.statusCode}');
+      showNotification(
+          context, 'Błąd podczas edytowania roweru ${response.statusCode}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mój profil'),
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              showSettingsDialog(context);
-            },
-          )
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                child: ListTile(
-                  title: Text(
-                    username,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  subtitle: Text('$name $surname'),
-                ),
-              ),
-              const SizedBox(height: 5.0),
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Adres e-mail: $email',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                      ],
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if(didPop) {
+          return;
+        }
+        MoveToBackground.moveTaskToBack();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Mój profil'),
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/');
+                showNotification(context, 'Wylogowano!');
+              },
+            )
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  child: ListTile(
+                    title: Text(
+                      username,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
+                    subtitle: Text('$name $surname'),
                   ),
                 ),
-              ),
-              const SizedBox(height: 5.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Data urodzenia: ${formatDateStringDay(birthDate)}r.',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                          ],
-                        ),
+                const SizedBox(height: 5.0),
+                SizedBox(
+                  width: double.infinity,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Adres e-mail: $email',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  //const Spacer(),
-                  Card(
+                ),
+                const SizedBox(height: 5.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Data urodzenia: ${formatDateStringDay(birthDate)}r.',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    //const Spacer(),
+                    Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: SizedBox(
                           width: 110,
                           child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
                                 'Płeć: $gender',
                                 style: Theme.of(context).textTheme.labelLarge,
                               ),
@@ -222,56 +244,60 @@ class _UserProfileState extends State<UserProfile> {
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 5.0),
-              Card(
-                child: ListTile(
-                  title: Text(
-                    'Twoje rowery',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  ],
+                ),
+                const SizedBox(height: 5.0),
+                Card(
+                  child: ListTile(
+                    title: Text(
+                      'Twoje rowery',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 5.0),
-              Card(
-                child: ExpansionPanelList(
-                  expandedHeaderPadding: const EdgeInsets.all(0.0),
-                  materialGapSize: 0,
-                  elevation: 0,
-                  expansionCallback: (int cardId, bool isExpanded) {
-                    setState(() {
-                      isBikeExpanded[cardId] = isExpanded;
-                    });
-                  },
-                  children: buildBikeExpansionPanels(),
+                const SizedBox(height: 5.0),
+                Card(
+                  child: ExpansionPanelList(
+                    expandedHeaderPadding: const EdgeInsets.all(0.0),
+                    materialGapSize: 0,
+                    elevation: 0,
+                    expansionCallback: (int cardId, bool isExpanded) {
+                      setState(() {
+                        isBikeExpanded[cardId] = isExpanded;
+                      });
+                    },
+                    children: buildBikeExpansionPanels(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-          switch (currentIndex) {
-            case 0:
-              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
-              break;
-            case 1:
-              Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
-              break;
-            case 2:
-              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
-              break;
-            case 3:
-              // UserProfile
-              break;
-          }
-        },
+        bottomNavigationBar: BottomNavigationBarWidget(
+          currentIndex: currentIndex,
+          onTap: (index) {
+            setState(() {
+              currentIndex = index;
+            });
+            switch (currentIndex) {
+              case 0:
+                Navigator.pushReplacementNamed(context, '/race_list',
+                    arguments: widget.accessToken);
+                break;
+              case 1:
+                Navigator.pushReplacementNamed(context, '/ranking',
+                    arguments: widget.accessToken);
+                break;
+              case 2:
+                Navigator.pushReplacementNamed(context, '/race_participation',
+                    arguments: widget.accessToken);
+                break;
+              case 3:
+                // UserProfile
+                break;
+            }
+          },
+        ),
       ),
     );
   }
@@ -280,7 +306,11 @@ class _UserProfileState extends State<UserProfile> {
     return bikes.asMap().entries.toList().map((entry) {
       final cardId = entry.key;
       final bike = entry.value;
-      Map<String, String> bikeTypesMap = {'other': 'inny', 'road': 'szosa', 'fixie': 'ostre koło'};
+      Map<String, String> bikeTypesMap = {
+        'other': 'inny',
+        'road': 'szosa',
+        'fixie': 'ostre koło'
+      };
 
       return ExpansionPanel(
         backgroundColor: Colors.transparent,
@@ -353,57 +383,14 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   final MaterialStateProperty<Icon?> thumbIcon =
-  MaterialStateProperty.resolveWith<Icon?>(
-        (Set<MaterialState> states) {
+      MaterialStateProperty.resolveWith<Icon?>(
+    (Set<MaterialState> states) {
       if (states.contains(MaterialState.selected)) {
         return const Icon(Icons.check);
       }
       return const Icon(Icons.close);
     },
   );
-
-  void showSettingsDialog(BuildContext context) async {
-    bool isDarkModeEnabled = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Center(
-                child: Text(
-                    'Włącz/wyłącz tryb ciemny',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Switch(
-                    thumbIcon: thumbIcon,
-                    value: isDarkModeEnabled,
-                    onChanged: (bool value) {
-                      setState(() {
-                        isDarkModeEnabled = value;
-                      });
-                      Provider.of<ThemeProvider>(context, listen: false)
-                          .toggleTheme();
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Wyjdź'),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   void showDeleteBikeDialog(BuildContext context, int bikeId) async {
     showDialog(
@@ -446,8 +433,10 @@ class _UserProfileState extends State<UserProfile> {
 
   void showEditBikeDialog(BuildContext context, final bike) async {
     TextEditingController bikeName = TextEditingController(text: bike['name']);
-    TextEditingController bikeBrand = TextEditingController(text: bike['brand']);
-    TextEditingController bikeModel = TextEditingController(text: bike['model']);
+    TextEditingController bikeBrand =
+        TextEditingController(text: bike['brand']);
+    TextEditingController bikeModel =
+        TextEditingController(text: bike['model']);
     List<Map<String, String>> bikeTypes = [
       {'display': 'inny', 'value': 'other'},
       {'display': 'szosa', 'value': 'road'},
@@ -465,7 +454,7 @@ class _UserProfileState extends State<UserProfile> {
               content: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child:Column(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextFormField(
@@ -517,7 +506,8 @@ class _UserProfileState extends State<UserProfile> {
                             selectedBikeType = value!;
                           });
                         },
-                        items: bikeTypes.map<DropdownMenuItem<String>>((Map<String, String> bikeType) {
+                        items: bikeTypes.map<DropdownMenuItem<String>>(
+                            (Map<String, String> bikeType) {
                           return DropdownMenuItem<String>(
                             value: bikeType['value'],
                             child: Text('${bikeType['display']}'),
@@ -558,7 +548,6 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-
   void showNotification(BuildContext context, String message) {
     final snackBar = SnackBar(
       content: Text(message),
@@ -567,5 +556,4 @@ class _UserProfileState extends State<UserProfile> {
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
-
 }

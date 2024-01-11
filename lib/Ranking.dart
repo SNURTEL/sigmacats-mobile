@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'BottomNavigationBar.dart';
+import 'package:move_to_background/move_to_background.dart';
 
 class Ranking extends StatefulWidget {
   final String accessToken;
+
   const Ranking({Key? key, required this.accessToken}) : super(key: key);
 
-@override
-_RankingState createState() => _RankingState();
+  @override
+  _RankingState createState() => _RankingState();
 }
 
 class _RankingState extends State<Ranking> {
@@ -14,35 +16,46 @@ class _RankingState extends State<Ranking> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          return;
+        }
+        MoveToBackground.moveTaskToBack();
+      },
+      child: Scaffold(
         appBar: AppBar(
           title: const Text('Ranking'),
           automaticallyImplyLeading: false,
           centerTitle: true,
         ),
-        body: const Center(
+        body: const Center(),
+        bottomNavigationBar: BottomNavigationBarWidget(
+          currentIndex: currentIndex,
+          onTap: (index) {
+            setState(() {
+              currentIndex = index;
+            });
+            switch (currentIndex) {
+              case 0:
+                Navigator.pushReplacementNamed(context, '/race_list',
+                    arguments: widget.accessToken);
+                break;
+              case 1:
+                // Ranking
+                break;
+              case 2:
+                Navigator.pushReplacementNamed(context, '/race_participation',
+                    arguments: widget.accessToken);
+                break;
+              case 3:
+                Navigator.pushReplacementNamed(context, '/user_profile',
+                    arguments: widget.accessToken);
+                break;
+            }
+          },
         ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-          switch (currentIndex) {
-            case 0:
-              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
-              break;
-            case 1:
-              // Ranking
-              break;
-            case 2:
-              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
-              break;
-            case 3:
-              Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
-              break;
-          }
-        },
       ),
     );
   }
