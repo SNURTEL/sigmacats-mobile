@@ -529,6 +529,7 @@ class _UserProfileState extends State<UserProfile> {
                           value: selectedBikeType,
                           isExpanded: true,
                           decoration: const InputDecoration(
+                            labelText: 'Typ',
                             border: OutlineInputBorder(),
                           ),
                           onChanged: (value) {
@@ -657,6 +658,7 @@ class _UserProfileState extends State<UserProfile> {
                           value: selectedBikeType,
                           isExpanded: true,
                           decoration: const InputDecoration(
+                            labelText: 'Typ',
                             border: OutlineInputBorder(),
                           ),
                           onChanged: (value) {
