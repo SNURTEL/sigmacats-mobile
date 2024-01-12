@@ -56,48 +56,44 @@ class _RankingState extends State<Ranking> {
   }
 
   Future<void> fetchScores(int classificationId) async {
-    List<RiderClassificationLink> scoresLocal = [];
-    List<Rider> ridersParsed = [];
-    List<ScoreRow> scoreRows = [];
-
     if (classificationId != 0) {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/rider_classification_link/$classificationId/classification'),
+        Uri.parse(
+            'http://10.0.2.2:8000/api/rider/rider_classification_link/$classificationId/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
       );
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, parse the scores from the response
         final List<dynamic> scores = json.decode(utf8.decode(response.bodyBytes));
-        scoresLocal = scores.map((score) => RiderClassificationLink.fromJson(score)).toList();
+        setState(() {
+          scoreRows = scores.map((score) => ScoreRow.fromJson(score)).toList();
+        });
       } else {
         // If the server did not return a 200 OK response, throw an exception
         throw Exception('Failed to load scores');
       }
-
-      final responseRiders = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/classification/$classificationId/rider'),
-        headers: {'Authorization': 'Bearer ${widget.accessToken}'},
-      );
-
-      if (responseRiders.statusCode == 200) {
-        final List<dynamic> riders = json.decode(utf8.decode(responseRiders.bodyBytes));
-        ridersParsed = riders.map((rider) => Rider.fromJson(rider)).toList();
-      } else {
-        throw Exception('Failed to load riders');
-      }
-
-      for (RiderClassificationLink score in scoresLocal) {
-        for (Rider rider in ridersParsed) {
-          if (score.rider_id == rider.id) {
-            scoreRows.add(ScoreRow(score: score.score, name: rider.name, surname: rider.surname));
-          }
-        }
-      }
     }
-    setState(() {
-      this.scoreRows = scoreRows;
-    });
+    else {
+      setState(() {
+        scoreRows = [];
+      });
+    }
+  }
+
+  Color getColor(int index) {
+    if (index == 0) {
+      return Colors.amber;
+    }
+    else if (index == 1) {
+      return Colors.blueGrey.shade300;
+    }
+    else if (index == 2) {
+      return Colors.deepOrange.shade800;
+    }
+    else {
+      return Colors.white;
+    }
   }
 
   @override
@@ -114,7 +110,7 @@ class _RankingState extends State<Ranking> {
           automaticallyImplyLeading: false,
           centerTitle: true,
         ),
-        body: ListView(
+        body: Column(
             children: <Widget> [
               DropdownButton<String>(
                 value: dropdownValue,
@@ -144,27 +140,41 @@ class _RankingState extends State<Ranking> {
                   );
                 }).toList(),
               ),
-              ListView.builder(
-                itemCount: scoreRows.length,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.all(10.0),
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${scoreRows[index].name} ${scoreRows[index].surname}",
-                              style: Theme.of(context).textTheme.titleLarge,
+              Expanded(
+                child: ListView.builder(
+                  itemCount: scoreRows.length,
+                  itemBuilder: (context, index) {
+                    return Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: Card(
+                            color: getColor(index),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "${scoreRows[index].name} ${scoreRows[index].surname}",
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                  Text(
+                                    "${scoreRows[index].score}",
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 5.0),
-                          ],
+                          ),
                         ),
-                      )
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               )
             ]
         ),
@@ -234,42 +244,18 @@ class Season {
   }
 }
 
-class RiderClassificationLink {
-  final int score;
-  final int rider_id;
-  final int classification_id;
-
-  RiderClassificationLink({required this.score, required this.rider_id, required this.classification_id});
-
-  factory RiderClassificationLink.fromJson(Map<String, dynamic> json) {
-    return RiderClassificationLink(
-      score: json['score'],
-      rider_id: json['rider_id'],
-      classification_id: json['classification_id']
-    );
-  }
-}
-
-class Rider {
-  final int id;
-  final String name;
-  final String surname;
-
-  Rider({required this.id, required this.name, required this.surname});
-
-  factory Rider.fromJson(Map<String, dynamic> json) {
-    return Rider(
-        id: json['id'],
-        name: json['account']['name'],
-        surname: json['account']['surname']
-    );
-  }
-}
-
 class ScoreRow {
   final int score;
   final String name;
   final String surname;
 
   ScoreRow({required this.score, required this.name, required this.surname});
+
+  factory ScoreRow.fromJson(Map<String, dynamic> json) {
+    return ScoreRow(
+        score: json['score'],
+        name: json['name'],
+        surname: json['surname']
+    );
+  }
 }
