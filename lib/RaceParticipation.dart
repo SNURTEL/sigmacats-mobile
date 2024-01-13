@@ -9,6 +9,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:move_to_background/move_to_background.dart';
+import 'settings.dart' as settings;
 
 class RaceParticipation extends StatefulWidget {
   final String accessToken;
@@ -65,7 +66,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Future<void> fetchRaceList() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -81,7 +82,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Future<void> fetchRaceDetails(int id) async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/$id'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/$id'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -99,7 +100,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Future<void> fetchGpxMap() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2$gpxMapLink'),
+      Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
 
     if (response.statusCode == 200) {
@@ -286,7 +287,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                                     .eventGraphic
                                     .contains("/")
                                 ? Image.network(
-                                    'http://10.0.2.2${itemList[nextRaceIndex].eventGraphic}',
+                                    '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
                                     fit: BoxFit.fitHeight,
                                   )
                                 : Image.asset(

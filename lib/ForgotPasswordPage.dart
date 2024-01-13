@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'settings.dart' as settings;
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Future<void> _sendEmail(BuildContext context) async {
     if (_formKey.currentState?.validate() ?? false) {
       String email = _emailController.text;
-      final apiUrl = Uri.parse('http://10.0.2.2:8000/api/auth/forgot-password');
+      final apiUrl = Uri.parse('${settings.apiBaseUrl}/api/auth/forgot-password');
 
       try {
         final response = await http.post(apiUrl, body: {'email': email});

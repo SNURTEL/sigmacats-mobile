@@ -5,6 +5,7 @@ import 'RaceDetails.dart';
 import 'functions.dart';
 import 'BottomNavigationBar.dart';
 import 'package:move_to_background/move_to_background.dart';
+import 'settings.dart' as settings;
 
 class RaceList extends StatefulWidget {
   final String accessToken;
@@ -27,7 +28,7 @@ class _RaceListState extends State<RaceList> {
 
   Future<void> fetchRaceList() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -105,7 +106,7 @@ class _RaceListState extends State<RaceList> {
                                             .eventGraphic
                                             .contains("/")
                                         ? Image.network(
-                                            'http://10.0.2.2${itemList[index].eventGraphic}',
+                                            '${settings.apiBaseUrl}${itemList[index].eventGraphic}',
                                             fit: BoxFit.fitWidth,
                                           )
                                         : Image.asset(
