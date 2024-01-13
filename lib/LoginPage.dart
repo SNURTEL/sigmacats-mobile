@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'settings.dart' as settings;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState?.validate() ?? false) {
       String username = _usernameController.text;
       String password = _passwordController.text;
-      final apiUrl = Uri.parse('http://10.0.2.2:8000/api/auth/jwt/login');
+      final apiUrl = Uri.parse('${settings.apiBaseUrl}/api/auth/jwt/login');
 
       try {
         final response = await http.post(apiUrl, body: {'username': username, 'password': password});

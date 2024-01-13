@@ -6,6 +6,7 @@ import 'package:gpx/gpx.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
+import 'settings.dart' as settings;
 
 class RaceDetails extends StatefulWidget {
   final int id;
@@ -52,7 +53,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> fetchRaceDetails() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -88,7 +89,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> fetchGpxMap() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2$gpxMapLink'),
+      Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
 
     if (response.statusCode == 200) {
@@ -112,7 +113,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -136,7 +137,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> joinRace(int bikeId) async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -152,7 +153,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> withdrawFromRace() async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/withdraw'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 

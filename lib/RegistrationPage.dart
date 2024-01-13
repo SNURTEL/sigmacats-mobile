@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'settings.dart' as settings;
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({Key? key}) : super(key: key);
@@ -64,12 +65,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
     var body = json.encode(data);
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:80/api/auth/register'),
+      Uri.parse('${settings.apiBaseUrl}/api/auth/register'),
       headers: {"Content-Type": "application/json"},
       body: body,
     );
 
     if (response.statusCode == 201) {
+      Navigator.pushReplacementNamed(context, '/');
       showNotification(context, 'Udało się zarejestrować!');
     } else {
       showNotification(

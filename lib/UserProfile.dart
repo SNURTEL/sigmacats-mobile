@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'BottomNavigationBar.dart';
 import 'package:move_to_background/move_to_background.dart';
+import 'settings.dart' as settings;
 
 class UserProfile extends StatefulWidget {
   final String accessToken;
@@ -35,7 +36,7 @@ class _UserProfileState extends State<UserProfile> {
 
   Future<void> fetchUserInfo() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/users/me'),
+      Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -65,7 +66,7 @@ class _UserProfileState extends State<UserProfile> {
 
   Future<void> fetchBikesDetails() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -101,7 +102,7 @@ class _UserProfileState extends State<UserProfile> {
     Map data = {"is_retired": "true"};
     var body = json.encode(data);
     final response = await http.patch(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/$bikeId'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/$bikeId'),
       headers: {
         'Authorization': 'Bearer ${widget.accessToken}',
         "Content-Type": "application/json"
@@ -129,7 +130,7 @@ class _UserProfileState extends State<UserProfile> {
     };
     var body = json.encode(data);
     final response = await http.patch(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/${bikeInfo['id']}'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/${bikeInfo['id']}'),
       headers: {
         'Authorization': 'Bearer ${widget.accessToken}',
         "Content-Type": "application/json"
@@ -157,7 +158,7 @@ class _UserProfileState extends State<UserProfile> {
     };
     var body = json.encode(data);
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/create'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/create'),
       headers: {
         'Authorization': 'Bearer ${widget.accessToken}',
         "Content-Type": "application/json"
