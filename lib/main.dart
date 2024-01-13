@@ -11,8 +11,11 @@ import 'Ranking.dart';
 import 'RaceParticipation.dart';
 import 'UserProfile.dart';
 import 'ForgotPasswordPage.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  await initializeDateFormatting('pl_PL', null);
   runApp(const App());
 }
 
@@ -29,6 +32,10 @@ class _AppState extends State<App> {
     return MaterialApp(
       theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [
+        Locale('pl', 'PL'),
+      ],
       initialRoute: '/',
       onGenerateRoute: (settings) {
         WidgetBuilder builder;

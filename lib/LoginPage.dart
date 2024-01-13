@@ -80,9 +80,6 @@ class _LoginPageState extends State<LoginPage> {
                     if (value == null || value.isEmpty) {
                       return "Hasło nie może być puste.";
                     }
-                    if (value.length < 8) {
-                      return "Hasło musi zawierać co najmniej 8 znaków.";
-                    }
                     return null;
                   },
                   controller: _passwordController,
