@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({Key? key}) : super(key: key);
 
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
+}
+
+DateTime clipDay(DateTime d) {
+  if (!DateUtils.isSameDay(d, DateTime.now())) {
+    return DateTime.now().copyWith(
+        hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0);
+  } else {
+    return d;
+  }
 }
 
 class _RegistrationPageState extends State<RegistrationPage> {
@@ -17,6 +27,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _surnameController = TextEditingController();
+  DateTime birthDate = clipDay(DateTime.now().copyWith(second: 0, millisecond: 0, microsecond: 0));
   List<Map<String, String?>> genderOptions = [
     {'display': 'mężczyzna', 'value': 'male'},
     {'display': 'kobieta', 'value': 'female'},
@@ -27,15 +38,30 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _showRepeatPassword = false;
 
   Future<void> registerUser(BuildContext context) async {
-    Map data = {
-      "email": _emailController.text,
-      "password": _passwordController.text,
-      "username": _usernameController.text,
-      "name": _nameController.text,
-      "surname": _surnameController.text,
-      "gender": selectedGenderOption,
-      "birth_date": 'todo',
-    };
+    Map data = {};
+    if (selectedGenderOption == null) {
+      data = {
+        "email": _emailController.text,
+        "password": _passwordController.text,
+        "type": "rider",
+        "username": _usernameController.text,
+        "name": _nameController.text,
+        "surname": _surnameController.text,
+        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate)
+      };
+    }
+    else {
+      data = {
+        "email": _emailController.text,
+        "password": _passwordController.text,
+        "type": "rider",
+        "username": _usernameController.text,
+        "name": _nameController.text,
+        "surname": _surnameController.text,
+        "gender": selectedGenderOption,
+        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate)
+      };
+    }
     var body = json.encode(data);
     final response = await http.post(
       Uri.parse('http://10.0.2.2:80/api/auth/register'),
@@ -43,7 +69,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       body: body,
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       showNotification(context, 'Udało się zarejestrować!');
     } else {
       showNotification(
@@ -133,13 +159,49 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     });
                   },
                   items: genderOptions.map<DropdownMenuItem<String>>(
-                        (Map<String, String?> genderOption) {
+                    (Map<String, String?> genderOption) {
                       return DropdownMenuItem<String>(
                         value: genderOption['value'],
                         child: Text('${genderOption['display']}'),
                       );
                     },
                   ).toList(),
+                ),
+                const SizedBox(height: 20.0),
+                FormField<DateTime>(
+                  autovalidateMode: AutovalidateMode.always,
+                  validator: (value) {
+                    return value != null &&
+                            !DateUtils.isSameDay(value, DateTime.now()) &&
+                            value.isAfter(DateTime.now())
+                        ? "Nie można wybrać daty z przyszłości"
+                        : null;
+                  },
+                  builder: (FormFieldState state) {
+                    return InkWell(
+                      onTap: () async {
+                        var pickedDate =
+                            await _selectDate(context, initialDate: birthDate);
+                        if (pickedDate != null && pickedDate != birthDate) {
+                          setState(() {
+                            birthDate = birthDate.copyWith(
+                                day: pickedDate.day,
+                                month: pickedDate.month,
+                                year: pickedDate.year);
+                          });
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Data urodzenia',
+                          border: const OutlineInputBorder(),
+                          errorText: state.errorText,
+                        ),
+                        child: Text(
+                            "${DateFormat.EEEE("pl_PL").format(birthDate)}, ${DateFormat.MMMMd("pl_PL").format(birthDate)}"),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20.0),
                 TextFormField(
@@ -250,6 +312,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ),
     );
+  }
+
+  Future<DateTime?> _selectDate(BuildContext context,
+      {DateTime? initialDate}) async {
+    DateTime selectedDate = initialDate ?? DateTime.now();
+    final DateTime? pickedDate = await showDatePicker(
+        firstDate: DateTime.now().subtract(const Duration(days: 36500)),
+        lastDate: DateTime.now(),
+        context: context,
+        initialDate: selectedDate,
+        builder: (BuildContext context, Widget? child) {
+          return MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(alwaysUse24HourFormat: false)
+                .copyWith(
+                  alwaysUse24HourFormat: true,
+                ),
+            child: child!,
+          );
+        });
+    return pickedDate;
   }
 
   void showNotification(BuildContext context, String message) {
