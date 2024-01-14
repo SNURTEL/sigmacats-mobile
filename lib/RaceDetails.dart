@@ -37,6 +37,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   String selectedBike = '';
   bool isParticipating = false;
   final mapController = MapController();
+  List<String> sponsorBannersUrl = [];
 
   @override
   void initState() {
@@ -81,6 +82,13 @@ class _RaceDetailsState extends State<RaceDetails> {
         startTimestamp = raceDetails['start_timestamp'];
         endTimestamp = raceDetails['end_timestamp'];
         isParticipating = userParticipating;
+        final sponsorBannersJson = raceDetails['sponsor_banners_uuids_json'];
+        if (sponsorBannersJson != null) {
+          final List<dynamic> sponsorBannersList = json.decode(sponsorBannersJson);
+          sponsorBannersUrl = sponsorBannersList
+              .where((url) => url.toString().contains("/"))
+              .map((url) => url.toString()).toList();
+        }
       });
     } else {
       throw Exception('Failed to load race details');
@@ -309,6 +317,31 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
+              if (sponsorBannersUrl.isNotEmpty)
+                Column(
+                  children: [
+                    const SizedBox(height: 5.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Sponsorzy:',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5.0),
+                    buildSponsorBanners(),
+                  ],
+                ),
               if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),
             ],
           ),
@@ -331,6 +364,27 @@ class _RaceDetailsState extends State<RaceDetails> {
             label: const Text('Weź udział w wyścigu!'),
             icon: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget buildSponsorBanners() {
+    return Column(
+      children: sponsorBannersUrl.map((bannerUrl) {
+        return SizedBox(
+          width: double.infinity,
+          child: Card(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(
+              Radius.circular(16.0),
+            ),
+            child: Image.network(
+              '${settings.apiBaseUrl}$bannerUrl',
+              fit: BoxFit.fitWidth,
+            ),
+          ),
+        ),
+        );
+      }).toList(),
     );
   }
 
