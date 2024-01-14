@@ -5,6 +5,7 @@ import 'CustomColorScheme.dart';
 import 'HomePage.dart';
 import 'LocationPage.dart';
 import 'LoginPage.dart';
+import 'RaceTrackingPage.dart';
 import 'RegistrationPage.dart';
 import 'RaceList.dart';
 import 'Ranking.dart';
@@ -74,8 +75,6 @@ class _AppState extends State<App> {
             builder = (context) => UserProfile(accessToken: accessToken);
             break;
           case '/location':
-          // final String accessToken = settings.arguments as String;
-          // builder = (context) => LocationPage(accessToken: accessToken);;
             builder = (context) => LocationPage();
             break;
           default:

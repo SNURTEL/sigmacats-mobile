@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:sigmactas_alleycat/RaceTrackingPage.dart';
 import 'BottomNavigationBar.dart';
 import 'RaceDetails.dart';
 import 'package:http/http.dart' as http;
@@ -14,25 +15,23 @@ import 'settings.dart' as settings;
 class RaceParticipation extends StatefulWidget {
   final String accessToken;
 
-  const RaceParticipation({Key? key, required this.accessToken})
-      : super(key: key);
+  const RaceParticipation({Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _RaceParticipationState createState() => _RaceParticipationState();
 }
 
 class _RaceParticipationState extends State<RaceParticipation> {
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   int currentIndex = 2;
-  bool raceStarted = false;
   List<Race> itemList = [];
   String gpxMapLink = '';
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
   final mapController = MapController();
 
-  TileLayer get openStreetMapTileLayer => TileLayer(
+  TileLayer get openStreetMapTileLayer =>
+      TileLayer(
         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         userAgentPackageName: 'dev.fleaflet.flutter_map.example',
         // Use the recommended flutter_map_cancellable_tile_provider package to
@@ -56,10 +55,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
   void fitMap() {
     mapController.fitCamera(
       CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(pointsWpt
-              .where((e) => e.lat != null && e.lon != null)
-              .map((e) => LatLng(e.lat!, e.lon!))
-              .toList()),
+          bounds:
+          LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
           padding: const EdgeInsets.all(32)),
     );
   }
@@ -87,8 +84,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> raceDetails =
-          json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
       if (raceDetails['checkpoints_gpx_file'].contains("/")) {
         gpxMapLink = raceDetails['checkpoints_gpx_file'];
         fetchGpxMap();
@@ -108,11 +104,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
         Gpx gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
         pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
         points = gpxMap.trks.first.trksegs.first.trkpts
-            .where((element) =>
-                element.lat != null &&
-                element.lon != null &&
-                element.lat!.isFinite &&
-                element.lon!.isFinite)
+            .where((element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
             .map((e) => LatLng(e.lat!, e.lon!))
             .toList();
         fitMap();
@@ -153,13 +145,12 @@ class _RaceParticipationState extends State<RaceParticipation> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
-                constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height -
-                        3 * AppBar().preferredSize.height),
+                constraints: BoxConstraints(minHeight: MediaQuery
+                    .of(context)
+                    .size
+                    .height - 3 * AppBar().preferredSize.height),
                 child: Center(
-                  child: todayRace != null
-                      ? buildTodayRaceWidget(todayRace)
-                      : buildDefaultWidget(),
+                  child: todayRace != null ? buildTodayRaceWidget(todayRace) : NoRaceContent(),
                 ),
               ),
             ),
@@ -173,27 +164,23 @@ class _RaceParticipationState extends State<RaceParticipation> {
             });
             switch (currentIndex) {
               case 0:
-                Navigator.pushReplacementNamed(context, '/race_list',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
                 break;
               case 1:
-                Navigator.pushReplacementNamed(context, '/ranking',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
                 break;
               case 2:
-                // RaceParticipation
+              // RaceParticipation
                 break;
               case 3:
-                Navigator.pushReplacementNamed(context, '/user_profile',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
                 break;
             }
           },
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Navigator.pushNamed(context, '/location',
-                arguments: widget.accessToken);
+            Navigator.pushNamed(context, '/location', arguments: widget.accessToken);
           },
           child: const Icon(Icons.location_on_sharp),
         ),
@@ -206,13 +193,15 @@ class _RaceParticipationState extends State<RaceParticipation> {
     setState(() {});
   }
 
-  Widget buildDefaultWidget() {
+  Widget NoRaceContent() {
     int nextRaceIndex = findNextRaceIndex();
 
     return Container(
       alignment: Alignment.bottomCenter,
-      height: MediaQuery.of(context).size.height -
-          3 * AppBar().preferredSize.height,
+      height: MediaQuery
+          .of(context)
+          .size
+          .height - 3 * AppBar().preferredSize.height,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -226,7 +215,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                   children: [
                     Text(
                       'Na dzisiaj nie masz zaplanowanych żadnych wyścigów',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -238,7 +230,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height / 8),
+                SizedBox(height: MediaQuery
+                    .of(context)
+                    .size
+                    .height / 8),
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -249,7 +244,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         children: [
                           Text(
                             'Twój najbliższy wyścig:',
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .titleLarge,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -263,10 +261,11 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RaceDetails(
-                          itemList[nextRaceIndex].id,
-                          accessToken: widget.accessToken,
-                        ),
+                        builder: (context) =>
+                            RaceDetails(
+                              itemList[nextRaceIndex].id,
+                              accessToken: widget.accessToken,
+                            ),
                       ),
                     );
                   },
@@ -283,17 +282,15 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               topLeft: Radius.circular(16.0),
                               bottomLeft: Radius.circular(16.0),
                             ),
-                            child: itemList[nextRaceIndex]
-                                    .eventGraphic
-                                    .contains("/")
+                            child: itemList[nextRaceIndex].eventGraphic.contains("/")
                                 ? Image.network(
-                                    '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
-                                    fit: BoxFit.fitHeight,
-                                  )
+                              '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
+                              fit: BoxFit.fitHeight,
+                            )
                                 : Image.asset(
-                                    'lib/sample_image.png',
-                                    fit: BoxFit.fitHeight,
-                                  ),
+                              'lib/sample_image.png',
+                              fit: BoxFit.fitHeight,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 5.0),
@@ -305,15 +302,20 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               children: [
                                 Text(
                                   itemList[nextRaceIndex].name,
-                                  style: Theme.of(context).textTheme.titleLarge,
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .titleLarge,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text(
-                                  formatDateString(
-                                      itemList[nextRaceIndex].timeStart),
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  formatDateString(itemList[nextRaceIndex].timeStart),
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .bodyMedium,
                                 ),
                               ],
                             ),
@@ -328,7 +330,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
           else
             Column(
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height / 5),
+                SizedBox(height: MediaQuery
+                    .of(context)
+                    .size
+                    .height / 5),
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -339,7 +344,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         children: [
                           Text(
                             'Możesz zapisać się na wyścig\nw zakładce "Wyścigi"',
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .titleLarge,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -361,9 +369,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
     for (int i = 0; i < itemList.length; i++) {
       DateTime startDate = DateTime.parse(itemList[i].timeStart);
-      if (itemList[i].userParticipating &&
-          startDate.isAfter(today) &&
-          (closestDate == today || startDate.isBefore(closestDate))) {
+      if (itemList[i].userParticipating && startDate.isAfter(today) && (closestDate == today || startDate.isBefore(closestDate))) {
         closestIndex = i;
         closestDate = startDate;
       }
@@ -375,143 +381,65 @@ class _RaceParticipationState extends State<RaceParticipation> {
   Widget buildTodayRaceWidget(Race race) {
     fetchRaceDetails(race.id);
     if (race.status == 'pending') {
-      DateTime startTime = DateTime.parse(race.timeStart);
-
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          race.name,
-                          style: Theme.of(context).textTheme.headlineLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              SizedBox(
-                height: 300.0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
-                  child: ColorFiltered(
-                    colorFilter: ColorFilter.mode(
-                      Theme.of(context).colorScheme.surface.withOpacity(0.62),
-                      BlendMode.srcOver,
-                    ),
-                    child: FlutterMap(
-                      mapController: mapController,
-                      options: MapOptions(
-                          initialCenter: const LatLng(
-                              52.23202828872916, 21.006132649819673), //Warsaw
-                          initialZoom: 13,
-                          interactionOptions: InteractionOptions(
-                              flags: gpxMapLink.contains("/")
-                                  ? InteractiveFlag.all
-                                  : InteractiveFlag.none)),
-                      children: [
-                        openStreetMapTileLayer,
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: points,
-                              strokeWidth: 3,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Wyścig rozpocznie się za:',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              CountdownTimer(startTime: startTime),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RaceDetails(
-                        race.id,
-                        accessToken: widget.accessToken,
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Szczegóły wyścigu'),
-              ),
-            ],
-          ),
-        ],
-      );
+      return PendingRaceContent(race);
     } else if (race.status == 'in_progress') {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          race.name,
-                          style: Theme.of(context).textTheme.headlineLarge,
-                        ),
-                      ],
-                    ),
+      return InProgressRaceContent(race);
+    } else if (race.status == 'ended') {
+      return EndedRaceContent(race);
+    } else {
+      return NoRaceContent();
+    }
+  }
+
+  Widget PendingRaceContent(Race race) {
+    DateTime startTime = DateTime.parse(race.timeStart);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .headlineLarge,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                height: 300.0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
+            ),
+            const SizedBox(height: 8.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    Theme
+                        .of(context)
+                        .colorScheme
+                        .surface
+                        .withOpacity(0.62),
+                    BlendMode.srcOver,
+                  ),
                   child: FlutterMap(
                     mapController: mapController,
                     options: MapOptions(
-                        initialCenter: const LatLng(
-                            52.23202828872916, 21.006132649819673), //Warsaw
+                        initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
                         initialZoom: 13,
-                        interactionOptions: InteractionOptions(
-                            flags: gpxMapLink.contains("/")
-                                ? InteractiveFlag.all
-                                : InteractiveFlag.none)),
+                        interactionOptions:
+                        InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
                     children: [
                       openStreetMapTileLayer,
                       PolylineLayer(
@@ -519,7 +447,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                           Polyline(
                             points: points,
                             strokeWidth: 3,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .primary,
                           ),
                         ],
                       ),
@@ -527,38 +458,144 @@ class _RaceParticipationState extends State<RaceParticipation> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    raceStarted = !raceStarted;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  fixedSize: const Size(double.infinity, 50.0),
+            ),
+            const SizedBox(height: 8.0),
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Wyścig rozpocznie się za:',
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .titleLarge,
+                      ),
+                    ],
+                  ),
                 ),
-                child: Text(
-                    raceStarted ? 'Zakończ wyścig' : 'Rozpocznij wyścig!',
-                    style: const TextStyle(
-                        fontSize: 20.0, fontWeight: FontWeight.bold)),
               ),
-            ],
-          ),
-        ],
-      );
-    } else if (race.status == 'ended') {
-      return const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'tutaj powinien być ranking wyścigu',
-            style: TextStyle(fontSize: 20.0),
-          ),
-        ],
-      );
-    } else {
-      return buildDefaultWidget();
-    }
+            ),
+            const SizedBox(height: 8.0),
+            CountdownTimer(startTime: startTime),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RaceDetails(
+                          race.id,
+                          accessToken: widget.accessToken,
+                        ),
+                  ),
+                );
+              },
+              child: const Text('Szczegóły wyścigu'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget InProgressRaceContent(Race race) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .headlineLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                      initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                      initialZoom: 13,
+                      interactionOptions: InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                  children: [
+                    openStreetMapTileLayer,
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: points,
+                          strokeWidth: 3,
+                          color: Theme
+                              .of(context)
+                              .colorScheme
+                              .primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          RaceTrackingPage(
+                            race.id,
+                            accessToken: widget.accessToken,
+                          ),
+                    ));
+              },
+              style: ElevatedButton.styleFrom(
+                fixedSize: const Size(double.infinity, 50.0),
+              ),
+              child: Text('Przejdź do wyścigu', style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget FinishedRaceContent(Race race) {
+    return Text("placeholder");
+  }
+
+  Widget EndedRaceContent(Race race) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'tutaj powinien być ranking wyścigu',
+          style: TextStyle(fontSize: 20.0),
+        ),
+      ],
+    );
   }
 }
 
@@ -587,25 +624,27 @@ class CountdownTimer extends StatelessWidget {
               ),
               Text(
                 ':',
-                style: Theme.of(context).textTheme.displayLarge,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .displayLarge,
               ),
               CountdownCard(
                 label: 'min',
-                value: (duration.inMinutes.remainder(60))
-                    .toString()
-                    .padLeft(2, '0'),
+                value: (duration.inMinutes.remainder(60)).toString().padLeft(2, '0'),
                 left: 8.0,
                 right: 8.0,
               ),
               Text(
                 ':',
-                style: Theme.of(context).textTheme.displayLarge,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .displayLarge,
               ),
               CountdownCard(
                 label: 's',
-                value: (duration.inSeconds.remainder(60))
-                    .toString()
-                    .padLeft(2, '0'),
+                value: (duration.inSeconds.remainder(60)).toString().padLeft(2, '0'),
                 left: 8.0,
                 right: 0.0,
               ),
@@ -621,7 +660,9 @@ class CountdownTimer extends StatelessWidget {
   Stream<int> countdownStream() async* {
     while (true) {
       DateTime currentTime = DateTime.now();
-      int remainingSeconds = startTime.difference(currentTime).inSeconds;
+      int remainingSeconds = startTime
+          .difference(currentTime)
+          .inSeconds;
 
       yield remainingSeconds;
 
@@ -636,12 +677,7 @@ class CountdownCard extends StatelessWidget {
   final double left;
   final double right;
 
-  const CountdownCard(
-      {super.key,
-      required this.label,
-      required this.value,
-      required this.left,
-      required this.right});
+  const CountdownCard({super.key, required this.label, required this.value, required this.left, required this.right});
 
   @override
   Widget build(BuildContext context) {
@@ -654,7 +690,10 @@ class CountdownCard extends StatelessWidget {
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 value,
-                style: Theme.of(context).textTheme.displayLarge,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .displayLarge,
               ),
             ),
           ),
@@ -673,14 +712,13 @@ class Race {
   final String timeMeetUp;
   final bool userParticipating;
 
-  Race(
-      {required this.id,
-      required this.name,
-      required this.status,
-      required this.eventGraphic,
-      required this.timeStart,
-      required this.timeMeetUp,
-      required this.userParticipating});
+  Race({required this.id,
+    required this.name,
+    required this.status,
+    required this.eventGraphic,
+    required this.timeStart,
+    required this.timeMeetUp,
+    required this.userParticipating});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
