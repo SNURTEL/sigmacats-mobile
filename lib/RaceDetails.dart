@@ -6,6 +6,7 @@ import 'package:gpx/gpx.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
+import 'settings.dart' as settings;
 
 class RaceDetails extends StatefulWidget {
   final int id;
@@ -36,11 +37,13 @@ class _RaceDetailsState extends State<RaceDetails> {
   String selectedBike = '';
   bool isParticipating = false;
   final mapController = MapController();
+  List<String> sponsorBannersUrl = [];
 
   @override
   void initState() {
     super.initState();
     fetchRaceDetails();
+    fetchBikeNames();
   }
 
   @override
@@ -51,7 +54,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> fetchRaceDetails() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -79,6 +82,13 @@ class _RaceDetailsState extends State<RaceDetails> {
         startTimestamp = raceDetails['start_timestamp'];
         endTimestamp = raceDetails['end_timestamp'];
         isParticipating = userParticipating;
+        final sponsorBannersJson = raceDetails['sponsor_banners_uuids_json'];
+        if (sponsorBannersJson != null) {
+          final List<dynamic> sponsorBannersList = json.decode(sponsorBannersJson);
+          sponsorBannersUrl = sponsorBannersList
+              .where((url) => url.toString().contains("/"))
+              .map((url) => url.toString()).toList();
+        }
       });
     } else {
       throw Exception('Failed to load race details');
@@ -87,7 +97,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> fetchGpxMap() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2$gpxMapLink'),
+      Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
 
     if (response.statusCode == 200) {
@@ -111,13 +121,14 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:80/api/rider/bike/'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
+          .where((bike) => bike['is_retired'] == false)
           .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
           .toList();
       setState(() {
@@ -134,7 +145,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> joinRace(int bikeId) async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:80/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -150,7 +161,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> withdrawFromRace() async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/rider/race/${widget.id}/withdraw'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -306,6 +317,31 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
+              if (sponsorBannersUrl.isNotEmpty)
+                Column(
+                  children: [
+                    const SizedBox(height: 5.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Sponsorzy:',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5.0),
+                    buildSponsorBanners(),
+                  ],
+                ),
               if (status != 'ended' && status != 'cancelled') const SizedBox(height: 60.0),
             ],
           ),
@@ -331,6 +367,27 @@ class _RaceDetailsState extends State<RaceDetails> {
     );
   }
 
+  Widget buildSponsorBanners() {
+    return Column(
+      children: sponsorBannersUrl.map((bannerUrl) {
+        return SizedBox(
+          width: double.infinity,
+          child: Card(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(
+              Radius.circular(16.0),
+            ),
+            child: Image.network(
+              '${settings.apiBaseUrl}$bannerUrl',
+              fit: BoxFit.fitWidth,
+            ),
+          ),
+        ),
+        );
+      }).toList(),
+    );
+  }
+
   void showAddTextDialog(BuildContext context) async {
     fetchBikeNames();
     showDialog(
@@ -343,8 +400,12 @@ class _RaceDetailsState extends State<RaceDetails> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  DropdownButton<String>(
+                  DropdownButtonFormField<String>(
                     value: selectedValue,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
                     onChanged: (value) {
                       setState(() {
                         selectedValue = value!;
@@ -361,19 +422,19 @@ class _RaceDetailsState extends State<RaceDetails> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
                         child: const Text('Anuluj'),
                       ),
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () {
                           final selectedBikeId = getSelectedBikeId(selectedValue);
                           joinRace(selectedBikeId);
                           Navigator.pop(context);
                         },
-                        child: const Text('Accept'),
+                        child: const Text('Zapisz'),
                       ),
                     ],
                   ),

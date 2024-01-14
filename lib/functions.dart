@@ -18,6 +18,15 @@ String formatDateStringToHours(String dateString) {
   return formattedDate;
 }
 
+String formatDateStringDay(String dateString) {
+  if (dateString == 'null') {
+    return  'null';
+  }
+  DateTime dateTime = DateTime.parse(dateString);
+  String formattedDate = DateFormat('dd.MM.yyyy').format(dateTime);
+  return formattedDate;
+}
+
 bool isToday(String dateString) {
   DateTime today = DateTime.now();
   DateTime raceDate = DateTime.parse(dateString);

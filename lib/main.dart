@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-
-
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
 import 'LocationPage.dart';
@@ -13,8 +11,16 @@ import 'Ranking.dart';
 import 'RaceParticipation.dart';
 import 'UserProfile.dart';
 import 'ForgotPasswordPage.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'settings.dart' as settings;
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env");
+  settings.apiBaseUrl = dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2";
+  settings.uploadBaseUrl = '${dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2"}:${dotenv.env["FLUTTER_FASTAPI_UPLOAD_PORT"] ?? 5050}${dotenv.env["FLUTTER_FASTAPI_UPLOAD_URL_PREFIX"] ?? "/api/race/"}' ;
+  await initializeDateFormatting('pl_PL', null);
   runApp(const App());
 }
 
@@ -31,6 +37,10 @@ class _AppState extends State<App> {
     return MaterialApp(
       theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [
+        Locale('pl', 'PL'),
+      ],
       initialRoute: '/',
       onGenerateRoute: (settings) {
         WidgetBuilder builder;

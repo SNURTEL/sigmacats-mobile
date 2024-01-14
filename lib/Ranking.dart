@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'BottomNavigationBar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:move_to_background/move_to_background.dart';
 
 class Ranking extends StatefulWidget {
   final String accessToken;
+
   const Ranking({Key? key, required this.accessToken}) : super(key: key);
 
   @override
@@ -185,7 +187,15 @@ class _RankingState extends State<Ranking>{
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          return;
+        }
+        MoveToBackground.moveTaskToBack();
+      },
+      child: Scaffold(
         appBar: AppBar(
           title: const Text('Ranking'),
           automaticallyImplyLeading: false,
