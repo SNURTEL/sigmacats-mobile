@@ -22,21 +22,29 @@ class _RankingState extends State<Ranking>{
   String seasonDropdownValue = 'Wybierz sezon';
 
   Future<void> fetchClassifications() async {
-    final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/season/$seasonID/classification'),
-      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
-    );
+    if (seasonID != 0) {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/api/rider/season/$seasonID/classification'),
+        headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+      );
 
-    if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the classifications from the response
-      final List<dynamic> classifications = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, parse the classifications from the response
+        final List<dynamic> classifications = json.decode(utf8.decode(response.bodyBytes));
+        setState(() {
+          classificationsParsed = classifications.map((classification) => Classification.fromJson(classification)).toList();
+          classificationsParsed.insert(0, Classification(id: 0, name: 'Wybierz klasyfikację', description: 'brak'));
+        });
+      } else {
+        // If the server did not return a 200 OK response, throw an exception
+        throw Exception('Failed to load classifications');
+      }
+    }
+    else {
       setState(() {
-        classificationsParsed = classifications.map((classification) => Classification.fromJson(classification)).toList();
-        classificationsParsed.insert(0, Classification(id: 0, name: 'Wybierz klasyfikację', description: 'brak'));
+        classificationsParsed = [Classification(id: 0, name: 'Wybierz klasyfikację', description: 'brak')];
+        classificationDropdownValue = 'Wybierz klasyfikację';
       });
-    } else {
-      // If the server did not return a 200 OK response, throw an exception
-      throw Exception('Failed to load classifications');
     }
   }
 
@@ -104,8 +112,9 @@ class _RankingState extends State<Ranking>{
           scoreRows = scores.map((score) => ScoreRow.fromJson(score)).toList();
         });
       } else {
-        // If the server did not return a 200 OK response, throw an exception
-        throw Exception('Failed to load scores');
+        setState(() {
+          scoreRows = [];
+        });
       }
     }
     else {
@@ -235,7 +244,7 @@ class _RankingState extends State<Ranking>{
                         fetchClassifications();
                         setState(() {
                           seasonDropdownValue = value!;
-                          classificationDropdownValue = 'Klasyfikacja generalna';
+                          classificationDropdownValue = 'Wybierz klasyfikację';
                           scoreRows = [];
                         });
                       },
