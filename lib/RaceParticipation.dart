@@ -30,8 +30,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
   late List<Wpt> pointsWpt;
   final mapController = MapController();
 
-  TileLayer get openStreetMapTileLayer =>
-      TileLayer(
+  TileLayer get openStreetMapTileLayer => TileLayer(
         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         userAgentPackageName: 'dev.fleaflet.flutter_map.example',
         // Use the recommended flutter_map_cancellable_tile_provider package to
@@ -56,7 +55,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
     mapController.fitCamera(
       CameraFit.bounds(
           bounds:
-          LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
+              LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
           padding: const EdgeInsets.all(32)),
     );
   }
@@ -145,10 +144,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
-                constraints: BoxConstraints(minHeight: MediaQuery
-                    .of(context)
-                    .size
-                    .height - 3 * AppBar().preferredSize.height),
+                constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 3 * AppBar().preferredSize.height),
                 child: Center(
                   child: todayRace != null ? buildTodayRaceWidget(todayRace) : NoRaceContent(),
                 ),
@@ -170,7 +166,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                 Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
                 break;
               case 2:
-              // RaceParticipation
+                // RaceParticipation
                 break;
               case 3:
                 Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
@@ -198,10 +194,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
     return Container(
       alignment: Alignment.bottomCenter,
-      height: MediaQuery
-          .of(context)
-          .size
-          .height - 3 * AppBar().preferredSize.height,
+      height: MediaQuery.of(context).size.height - 3 * AppBar().preferredSize.height,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -215,10 +208,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                   children: [
                     Text(
                       'Na dzisiaj nie masz zaplanowanych żadnych wyścigów',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -230,10 +220,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height / 8),
+                SizedBox(height: MediaQuery.of(context).size.height / 8),
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -244,10 +231,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         children: [
                           Text(
                             'Twój najbliższy wyścig:',
-                            style: Theme
-                                .of(context)
-                                .textTheme
-                                .titleLarge,
+                            style: Theme.of(context).textTheme.titleLarge,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -261,11 +245,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            RaceDetails(
-                              itemList[nextRaceIndex].id,
-                              accessToken: widget.accessToken,
-                            ),
+                        builder: (context) => RaceDetails(
+                          itemList[nextRaceIndex].id,
+                          accessToken: widget.accessToken,
+                        ),
                       ),
                     );
                   },
@@ -284,13 +267,13 @@ class _RaceParticipationState extends State<RaceParticipation> {
                             ),
                             child: itemList[nextRaceIndex].eventGraphic.contains("/")
                                 ? Image.network(
-                              '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
-                              fit: BoxFit.fitHeight,
-                            )
+                                    '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
+                                    fit: BoxFit.fitHeight,
+                                  )
                                 : Image.asset(
-                              'lib/sample_image.png',
-                              fit: BoxFit.fitHeight,
-                            ),
+                                    'lib/sample_image.png',
+                                    fit: BoxFit.fitHeight,
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 5.0),
@@ -302,20 +285,14 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               children: [
                                 Text(
                                   itemList[nextRaceIndex].name,
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .titleLarge,
+                                  style: Theme.of(context).textTheme.titleLarge,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text(
                                   formatDateString(itemList[nextRaceIndex].timeStart),
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .bodyMedium,
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -330,10 +307,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
           else
             Column(
               children: [
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height / 5),
+                SizedBox(height: MediaQuery.of(context).size.height / 5),
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -344,10 +318,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         children: [
                           Text(
                             'Możesz zapisać się na wyścig\nw zakładce "Wyścigi"',
-                            style: Theme
-                                .of(context)
-                                .textTheme
-                                .titleLarge,
+                            style: Theme.of(context).textTheme.titleLarge,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -409,10 +380,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     children: [
                       Text(
                         race.name,
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .headlineLarge,
+                        style: Theme.of(context).textTheme.headlineLarge,
                       ),
                     ],
                   ),
@@ -426,11 +394,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                 borderRadius: BorderRadius.circular(16.0),
                 child: ColorFiltered(
                   colorFilter: ColorFilter.mode(
-                    Theme
-                        .of(context)
-                        .colorScheme
-                        .surface
-                        .withOpacity(0.62),
+                    Theme.of(context).colorScheme.surface.withOpacity(0.62),
                     BlendMode.srcOver,
                   ),
                   child: FlutterMap(
@@ -439,7 +403,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
                         initialZoom: 13,
                         interactionOptions:
-                        InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                            InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
                     children: [
                       openStreetMapTileLayer,
                       PolylineLayer(
@@ -447,10 +411,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                           Polyline(
                             points: points,
                             strokeWidth: 3,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ],
                       ),
@@ -470,10 +431,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     children: [
                       Text(
                         'Wyścig rozpocznie się za:',
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
                   ),
@@ -488,11 +446,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        RaceDetails(
-                          race.id,
-                          accessToken: widget.accessToken,
-                        ),
+                    builder: (context) => RaceDetails(
+                      race.id,
+                      accessToken: widget.accessToken,
+                    ),
                   ),
                 );
               },
@@ -520,10 +477,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                     children: [
                       Text(
                         race.name,
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .headlineLarge,
+                        style: Theme.of(context).textTheme.headlineLarge,
                       ),
                     ],
                   ),
@@ -548,10 +502,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         Polyline(
                           points: points,
                           strokeWidth: 3,
-                          color: Theme
-                              .of(context)
-                              .colorScheme
-                              .primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ],
                     ),
@@ -561,22 +512,64 @@ class _RaceParticipationState extends State<RaceParticipation> {
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          RaceTrackingPage(
-                            race.id,
-                            accessToken: widget.accessToken,
-                          ),
-                    ));
-              },
+              onPressed: race.participationStatus == 'approved'
+                  ? () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RaceTrackingPage(
+                              race.id,
+                              accessToken: widget.accessToken,
+                            ),
+                          ));
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 fixedSize: const Size(double.infinity, 50.0),
               ),
               child: Text('Przejdź do wyścigu', style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
             ),
           ],
+        ),
+        SizedBox(height: 16,),
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            late Icon icon;
+            late String msg;
+            switch (race.participationStatus) {
+              case "approved":
+                icon = Icon(Icons.done, color: Colors.green, size: 32,);
+                msg = "Zatwierdzone";
+                break;
+              case "rejected":
+                icon = Icon(Icons.close, color: Colors.red, size: 32,);
+                msg = "Odrzucone";
+                break;
+              default:
+                icon = Icon(Icons.question_mark, color: Colors.amber, size: 32,);
+                msg = "Oczekuje na zatwierdzenie";
+                break;
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: icon,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Status uczestnictwa", style: Theme.of(context).textTheme.labelMedium,),
+                    Text(msg, style: Theme.of(context).textTheme.titleLarge,)
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -624,10 +617,7 @@ class CountdownTimer extends StatelessWidget {
               ),
               Text(
                 ':',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .displayLarge,
+                style: Theme.of(context).textTheme.displayLarge,
               ),
               CountdownCard(
                 label: 'min',
@@ -637,10 +627,7 @@ class CountdownTimer extends StatelessWidget {
               ),
               Text(
                 ':',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .displayLarge,
+                style: Theme.of(context).textTheme.displayLarge,
               ),
               CountdownCard(
                 label: 's',
@@ -660,9 +647,7 @@ class CountdownTimer extends StatelessWidget {
   Stream<int> countdownStream() async* {
     while (true) {
       DateTime currentTime = DateTime.now();
-      int remainingSeconds = startTime
-          .difference(currentTime)
-          .inSeconds;
+      int remainingSeconds = startTime.difference(currentTime).inSeconds;
 
       yield remainingSeconds;
 
@@ -690,10 +675,7 @@ class CountdownCard extends StatelessWidget {
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 value,
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .displayLarge,
+                style: Theme.of(context).textTheme.displayLarge,
               ),
             ),
           ),
@@ -710,15 +692,18 @@ class Race {
   final String eventGraphic;
   final String timeStart;
   final String timeMeetUp;
+  final String? participationStatus;
   final bool userParticipating;
 
-  Race({required this.id,
-    required this.name,
-    required this.status,
-    required this.eventGraphic,
-    required this.timeStart,
-    required this.timeMeetUp,
-    required this.userParticipating});
+  Race(
+      {required this.id,
+      required this.name,
+      required this.status,
+      required this.eventGraphic,
+      required this.timeStart,
+      required this.timeMeetUp,
+      required this.userParticipating,
+      required this.participationStatus});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
@@ -731,13 +716,13 @@ class Race {
       meetupTimestamp = json['meetup_timestamp'];
     }
     return Race(
-      id: json['id'],
-      name: json['name'],
-      status: json['status'],
-      eventGraphic: json['event_graphic_file'],
-      timeStart: json['start_timestamp'],
-      timeMeetUp: meetupTimestamp,
-      userParticipating: participating,
-    );
+        id: json['id'],
+        name: json['name'],
+        status: json['status'],
+        eventGraphic: json['event_graphic_file'],
+        timeStart: json['start_timestamp'],
+        timeMeetUp: meetupTimestamp,
+        userParticipating: participating,
+        participationStatus: participationStatus);
   }
 }

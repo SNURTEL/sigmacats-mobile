@@ -482,6 +482,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();
                                 },
+                    
                         ),
                 ),
               ),
