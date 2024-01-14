@@ -40,11 +40,6 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
 
   final mapController = MapController();
 
-  final Future<String> _calculation = Future<String>.delayed(
-    const Duration(seconds: 10),
-    () => 'Data Loaded',
-  );
-
   TileLayer get openStreetMapTileLayer => TileLayer(
         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         userAgentPackageName: 'dev.fleaflet.flutter_map.example',
@@ -75,7 +70,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
       );
 
   MarkerLayer get markerLayer => MarkerLayer(
-      markers: location != null
+      markers: (location != null
           ? [
               Marker(
                   point: LatLng(location!.coords.latitude, location!.coords.longitude),
@@ -85,7 +80,28 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                     color: context.isDarkMode1 ? Colors.white : Colors.black54,
                   ))
             ]
-          : []);
+          : [])
+        ..addAll(trackPoints.isNotEmpty
+            ? [
+                Marker(
+                    point: LatLng(trackPoints.last.latitude, trackPoints.last.longitude),
+                    rotate: true,
+                    width: 24,
+                    height: 24,
+                    child: Container(
+                        decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            shape: BoxShape.circle
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: Image.asset(
+                            "lib/finish_line_icon.png",
+                            color: context.isDarkMode1 ? Colors.white : Colors.black87,
+                          ),
+                        )))
+              ]
+            : []));
 
   void initState() {
     super.initState();
@@ -107,6 +123,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   void dispose() {
     super.dispose();
     bg.BackgroundGeolocation.stop();
+    bg.BackgroundGeolocation.removeListeners();
     mapController.dispose();
   }
 
@@ -192,7 +209,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     setState(() {
       final gpxMap = GpxReader().fromString(utf8.decode(gpxResponse.bodyBytes));
       trackPoints = gpxMap.trks.first.trksegs.first.trkpts
-          .where((element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
+          .where(
+              (element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
           .map((e) => LatLng(e.lat!, e.lon!))
           .toList();
     });
@@ -232,23 +250,26 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               FloatingActionButton.small(
-                                backgroundColor:
-                                    isFollowing ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
+                                backgroundColor: isFollowing
+                                    ? Theme.of(context).colorScheme.primaryContainer
+                                    : Theme.of(context).colorScheme.surface,
                                 shape: CircleBorder(),
                                 onPressed: () {
                                   setState(() {
                                     isFollowing = !isFollowing;
                                     isFitTrack = false;
                                     if (isFollowing && location != null) {
-                                      mapController.move(LatLng(location!.coords.latitude, location!.coords.longitude), 18);
+                                      mapController.move(
+                                          LatLng(location!.coords.latitude, location!.coords.longitude), 18);
                                     }
                                   });
                                 },
                                 child: Icon(Icons.gps_fixed),
                               ),
                               FloatingActionButton.small(
-                                backgroundColor:
-                                    isFitTrack ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
+                                backgroundColor: isFitTrack
+                                    ? Theme.of(context).colorScheme.primaryContainer
+                                    : Theme.of(context).colorScheme.surface,
                                 shape: CircleBorder(),
                                 onPressed: () {
                                   setState(() {
@@ -256,7 +277,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     isFollowing = false;
                                     if (isFitTrack && trackPoints.isNotEmpty) {
                                       mapController.rotate(-mapController.camera.rotationRad);
-                                      mapController.fitCamera(CameraFit.coordinates(coordinates: trackPoints, padding: EdgeInsets.all(24)));
+                                      mapController.fitCamera(
+                                          CameraFit.coordinates(coordinates: trackPoints, padding: EdgeInsets.all(24)));
                                     }
                                   });
                                 },
@@ -292,18 +314,43 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton(
-          onPressed: wasUploadSuccess ? null : () {
-            setState(() {
-              isTracking = true;
-              isFollowing = true;
-              isFitTrack = false;
-            });
-          },
+          onPressed: wasUploadSuccess
+              ? null
+              : () {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          icon: Icon(Icons.gps_fixed),
+                          title: Text("Wszystko gotowe?"),
+                          content: Text(
+                              "Aplikacja rozpocznie zapisywanie trasy przejazdu. Tej czynności nie da się anulować."),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text("Anuluj")),
+                            FilledButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isTracking = true;
+                                    isFollowing = true;
+                                    isFitTrack = false;
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text("Zaczynajmy!"))
+                          ],
+                        );
+                      });
+                },
           child: Text('START',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onTertiary, fontSize: 16, height: 1.2)),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onTertiary,
+                  fontSize: 16,
+                  height: 1.2)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.tertiary,
             foregroundColor: Theme.of(context).colorScheme.onTertiary,
@@ -320,18 +367,23 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         OutlinedButton(
-          onPressed: wasUploadSuccess ? null : () {
-            setState(() {
-              showDialog<void>(
-                context: context,
-                builder: (BuildContext context) {
-                  return EndRecordingDialog(context);
+          onPressed: wasUploadSuccess
+              ? null
+              : () {
+                  setState(() {
+                    showDialog<void>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return EndRecordingDialog(context);
+                      },
+                    );
+                  });
                 },
-              );
-            });
-          },
-          child:
-              Text('STOP', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500, fontSize: 16, height: 1.2)),
+          child: Text('STOP',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w500, fontSize: 16, height: 1.2)),
           style: OutlinedButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.tertiary,
             side: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 5),
@@ -360,6 +412,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
           canPop: !isUploading && !wasUploadSuccess,
           child: AlertDialog(
             title: const Text('Zakończyć rejestrowanie?'),
+            icon: Icon(Icons.done),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -376,10 +429,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                         opacity: isUploading || wasUploadSuccess ? 1 : 0,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(wasUploadSuccess ? "Sukces!" : "Przesyłanie..." ),
-                        )
-                    )
-                )
+                          child: Text(wasUploadSuccess ? "Sukces!" : "Przesyłanie..."),
+                        )))
               ],
             ),
             actions: <Widget>[
@@ -391,43 +442,47 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                 onPressed: isUploading || wasUploadSuccess
                     ? null
                     : () {
-                  Navigator.of(context).pop();
-                },
+                        Navigator.of(context).pop();
+                      },
               ),
               SizedBox(
                 height: 44,
                 width: 104,
                 child: Center(
-                  child: isUploading ? CircularProgressIndicator() : FilledButton(
-                    style: TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    child: const Text('Zakończ'),
-                    onPressed: wasUploadSuccess ? null : () async {
-                      setState(() {
-                        isUploading = true;
-                      });
-                      final responseStatusCode = await uploadResultGpx();
+                  child: isUploading
+                      ? CircularProgressIndicator()
+                      : FilledButton(
+                          style: TextButton.styleFrom(
+                            textStyle: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          child: const Text('Zakończ'),
+                          onPressed: wasUploadSuccess
+                              ? null
+                              : () async {
+                                  setState(() {
+                                    isUploading = true;
+                                  });
+                                  final responseStatusCode = await uploadResultGpx();
 
-                      if (responseStatusCode != 202) {
-                        showNotification(context, "Błąd przesyłania: $responseStatusCode");
-                        setState(() {
-                          isUploading = false;
-                          wasUploadSuccess = false;
-                        });
-                        return;
-                      }
+                                  if (responseStatusCode != 202) {
+                                    showNotification(context, "Błąd przesyłania: $responseStatusCode");
+                                    setState(() {
+                                      isUploading = false;
+                                      wasUploadSuccess = false;
+                                    });
+                                    return;
+                                  }
 
-                      setState(() {
-                        isUploading = false;
-                        wasUploadSuccess = true;
-                      });
-                      showNotification(context, "Przesłano!");
-                      await Future.delayed(Duration(seconds: 3));
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    },
-                  ),
+                                  setState(() {
+                                    isUploading = false;
+                                    wasUploadSuccess = true;
+                                  });
+                                  showNotification(context, "Przesłano!");
+                                  await Future.delayed(Duration(seconds: 3));
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop();
+                                },
+                        ),
                 ),
               ),
             ],
@@ -441,12 +496,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     final fileUuid = uuid.v4();
     final filename = 'race_${widget.raceId}_ride_${fileUuid}';
 
-    final gpx = dumpGpx(
-        locationHistory,
-        locationTimestamps,
-        fileUuid,
-        "This is a test GPX file"
-    );
+    final gpx = dumpGpx(locationHistory, locationTimestamps, fileUuid, "This is a test GPX file");
 
     final writer = GpxWriter().asString(gpx, pretty: true);
 
@@ -462,12 +512,14 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
         print("Uploaded!");
       } else {
         print("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
-      };
+      }
+      ;
       return response.statusCode;
     });
   }
 
-  Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps, [String name = "", String desc = "", DateTime? time]) {
+  Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps,
+      [String name = "", String desc = "", DateTime? time]) {
     time = time ?? DateTime.now();
     final gpx = Gpx();
     gpx.version = '1.1';
@@ -476,20 +528,14 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     gpx.metadata?.name = name;
     gpx.metadata?.desc = desc;
     gpx.metadata?.time = time;
-    gpx.trks = [Trk(
-        name: name,
-        type: "cycling",
-        trksegs: [
-          Trkseg(
-              trkpts: List.generate(trackpoints.length, (i) => i).map(
-                      (i) => Wpt(
-                      lat: trackpoints[i].latitude,
-                      lon: trackpoints[i].longitude,
-                      time: timestamps[i]
-                  )).toList()
-          )
-        ]
-    )];
+    gpx.trks = [
+      Trk(name: name, type: "cycling", trksegs: [
+        Trkseg(
+            trkpts: List.generate(trackpoints.length, (i) => i)
+                .map((i) => Wpt(lat: trackpoints[i].latitude, lon: trackpoints[i].longitude, time: timestamps[i]))
+                .toList())
+      ])
+    ];
     return gpx;
   }
 }
