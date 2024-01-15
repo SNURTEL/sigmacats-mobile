@@ -26,9 +26,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   int currentIndex = 2;
   List<Race> itemList = [];
   String gpxMapLink = '';
-  bool isApproved = false;
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
+  Race? todayRace;
   final mapController = MapController();
 
   TileLayer get openStreetMapTileLayer => TileLayer(
@@ -43,7 +43,21 @@ class _RaceParticipationState extends State<RaceParticipation> {
   @override
   void initState() {
     super.initState();
-    fetchRaceList();
+    reloadRaces();
+  }
+
+  Future<void> reloadRaces() async {
+    fetchRaceList().then((value) {
+      for (Race race in itemList) {
+        if (race.userParticipating && isToday(race.timeStart)) {
+          todayRace = race;
+          break;
+        }
+      }
+      if (todayRace != null) {
+        fetchRaceDetails(todayRace!.id);
+      }
+    });
   }
 
   @override
@@ -61,7 +75,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
     );
   }
 
-  Future<void> fetchRaceList() async {
+  Future<List<Race>> fetchRaceList() async {
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -72,8 +86,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
       setState(() {
         itemList = races.map((race) => Race.fromJson(race)).toList();
       });
+      return races.map((race) => Race.fromJson(race)).toList();
     } else {
-      throw Exception('Failed to load races');
+      throw Exception('Failed to load races: ${response.statusCode}');
     }
   }
 
@@ -89,8 +104,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
         gpxMapLink = raceDetails['checkpoints_gpx_file'];
         fetchGpxMap();
       }
-      isApproved = (raceDetails['race_participations'])?.any((e) => e['place_assigned_overall'] != null) ??
-          false || (raceDetails['status'] == 'ended' && raceDetails['race_participations'].isEmpty);
     } else {
       throw Exception('Failed to load race details');
     }
@@ -118,13 +131,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   @override
   Widget build(BuildContext context) {
-    Race? todayRace;
-    for (Race race in itemList) {
-      if (race.userParticipating && isToday(race.timeStart)) {
-        todayRace = race;
-        break;
-      }
-    }
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
@@ -149,7 +155,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
               child: Container(
                 constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 3 * AppBar().preferredSize.height),
                 child: Center(
-                  child: todayRace != null ? buildTodayRaceWidget(todayRace) : NoRaceContent(),
+                  child: todayRace != null ? buildTodayRaceWidget(todayRace!) : NoRaceContent(),
                 ),
               ),
             ),
@@ -188,7 +194,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> _handleRefresh() async {
-    await fetchRaceList();
+    await reloadRaces();
     setState(() {});
   }
 
@@ -353,12 +359,11 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget buildTodayRaceWidget(Race race) {
-    fetchRaceDetails(race.id);
     if (race.status == 'pending') {
       return PendingRaceContent(race);
     } else if (race.status == 'in_progress') {
       return InProgressRaceContent(race);
-    } else if (race.status == 'ended' && isApproved == false) {
+    } else if (race.status == 'ended' && race.isApproved == false) {
       return FinishedRaceContent(race);
     } else if (race.status == 'ended') {
       return EndedRaceContent(race);
@@ -841,6 +846,7 @@ class Race {
   final String timeMeetUp;
   final String? participationStatus;
   final bool userParticipating;
+  final bool isApproved;
 
   Race(
       {required this.id,
@@ -850,7 +856,8 @@ class Race {
       required this.timeStart,
       required this.timeMeetUp,
       required this.userParticipating,
-      required this.participationStatus});
+      required this.participationStatus,
+      required this.isApproved});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
@@ -871,6 +878,7 @@ class Race {
         timeStart: json['start_timestamp'],
         timeMeetUp: meetupTimestamp,
         userParticipating: participating,
-        participationStatus: participationStatus);
+        participationStatus: participationStatus,
+        isApproved: json['is_approved']);
   }
 }
