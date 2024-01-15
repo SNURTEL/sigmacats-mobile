@@ -183,12 +183,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
             }
           },
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/location', arguments: widget.accessToken);
-          },
-          child: const Icon(Icons.location_on_sharp),
-        ),
       ),
     );
   }

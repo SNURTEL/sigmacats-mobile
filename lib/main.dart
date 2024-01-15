@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
-import 'LocationPage.dart';
 import 'LoginPage.dart';
 import 'RaceTrackingPage.dart';
 import 'RegistrationPage.dart';
@@ -80,9 +79,6 @@ class _AppState extends State<App> {
           case '/user_profile':
             final String accessToken = settings.arguments as String;
             builder = (context) => UserProfile(accessToken: accessToken);
-            break;
-          case '/location':
-            builder = (context) => LocationPage();
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');
