@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:gpx/gpx.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
@@ -141,7 +142,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
         if (isTracking) {
           numSamples += 1;
           locationHistory.add(waypoint);
-          locationTimestamps.add(DateTime.parse(location.timestamp));
+          locationTimestamps.add(DateFormat("yyyy-MM-ddTHH:mm:ss").parse(location.timestamp, true).toLocal());
         }
       });
     });
@@ -561,7 +562,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
       Trk(name: name, type: "cycling", trksegs: [
         Trkseg(
             trkpts: List.generate(trackpoints.length, (i) => i)
-                .map((i) => Wpt(lat: trackpoints[i].latitude, lon: trackpoints[i].longitude, time: timestamps[i]))
+                .map((i) => Wpt(lat: trackpoints[i].latitude, lon: trackpoints[i].longitude, time: timestamps[i].toUtc()))
                 .toList())
       ])
     ];
