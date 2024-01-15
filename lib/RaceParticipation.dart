@@ -38,8 +38,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
   TileLayer get openStreetMapTileLayer => TileLayer(
         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-        // Use the recommended flutter_map_cancellable_tile_provider package to
-        // support the cancellation of loading tiles.
         tileProvider: CancellableNetworkTileProvider(),
         tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
       );
@@ -796,21 +794,40 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget EndedRaceContent(Race race) {
-    return SizedBox(
-      height: 1000,
-      child: ListView.builder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Text(
+          "${race.name} - wyniki",
+          style: Theme.of(context).textTheme.headlineMedium,
+          maxLines: 5,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: 32,),
+        ListView.builder(
+        shrinkWrap: true,
         itemCount: scoreRows.length,
         itemBuilder: (context, index) {
+          final places = [];
+          var prevPlace = 0;
+          double prevTime = 0;
+          for (var i = 1; i < scoreRows.length + 1; i++) {
+            late int nextPlace;
+            if (scoreRows[i-1].time == prevTime) {
+              nextPlace = prevPlace;
+            } else {
+              nextPlace = i;
+            }
+            places.add(nextPlace);
+            prevPlace = nextPlace;
+            prevTime = scoreRows[i-1].time;
+          }
+
           return Column(
             children: [
-              Text(
-                "${race.name} - wyniki",
-                style: Theme.of(context).textTheme.headlineMedium,
-                maxLines: 5,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 16,),
               Row(
                 children: [
                   Padding(
@@ -820,7 +837,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         right: 16.0
                     ),
                     child: Text(
-                      "${index+1}",
+                      "${places[index]}",
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
@@ -859,8 +876,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               ),
                               Expanded(
                                 child: Text(
-                                  //convertRuntime(scoreRows[index].time),
-                                  convertRuntime(6969),
+                                  convertRuntime(scoreRows[index].time),
                                   style: Theme.of(context).textTheme.labelLarge,
                                   textAlign: TextAlign.right,
                                 ),
@@ -876,7 +892,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
             ],
           );
         },
-      ),
+      )],
 
     );
   }
