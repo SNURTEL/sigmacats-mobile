@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sigmactas_alleycat/RaceTrackingPage.dart';
 import 'BottomNavigationBar.dart';
 import 'RaceDetails.dart';
@@ -209,7 +210,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Panel wyścigu'),
+          title: const Text('Wyścig'),
           automaticallyImplyLeading: false,
           centerTitle: true,
         ),
@@ -411,7 +412,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
     DateTime closestDate = today;
 
     for (int i = 0; i < itemList.length; i++) {
-      DateTime startDate = DateTime.parse(itemList[i].timeStart);
+      DateTime startDate = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(itemList[i].timeStart, true).toLocal();
       if (itemList[i].userParticipating && startDate.isAfter(today) && (closestDate == today || startDate.isBefore(closestDate))) {
         closestIndex = i;
         closestDate = startDate;
@@ -436,7 +437,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget PendingRaceContent(Race race) {
-    DateTime startTime = DateTime.parse(race.timeStart);
+    DateTime startTime = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(race.timeStart, true).toLocal();
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -802,6 +803,14 @@ class _RaceParticipationState extends State<RaceParticipation> {
         itemBuilder: (context, index) {
           return Column(
             children: [
+              Text(
+                "${race.name} - wyniki",
+                style: Theme.of(context).textTheme.headlineMedium,
+                maxLines: 5,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 16,),
               Row(
                 children: [
                   Padding(

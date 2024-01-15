@@ -48,7 +48,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         "username": _usernameController.text,
         "name": _nameController.text,
         "surname": _surnameController.text,
-        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate)
+        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate.toUtc())
       };
     }
     else {
@@ -60,7 +60,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         "name": _nameController.text,
         "surname": _surnameController.text,
         "gender": selectedGenderOption,
-        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate)
+        "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate.toUtc())
       };
     }
     var body = json.encode(data);

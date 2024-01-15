@@ -24,7 +24,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.pedal_bike, color: currentIndex == 2 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer),
-          label: 'Panel wyścigu',
+          label: 'Wyścig',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person, color: currentIndex == 3 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer),
