@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sigmactas_alleycat/RaceTrackingPage.dart';
 import 'BottomNavigationBar.dart';
 import 'RaceDetails.dart';
+import 'Ranking.dart';
 import 'package:http/http.dart' as http;
 import 'functions.dart';
 import 'package:gpx/gpx.dart';
@@ -25,6 +26,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   int currentIndex = 2;
   List<Race> itemList = [];
+  List<RaceScores> scoreRows = [];
+  User currentUser = User(name: 'default', surname: 'default', username: 'd');
   String gpxMapLink = '';
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
@@ -129,6 +132,70 @@ class _RaceParticipationState extends State<RaceParticipation> {
     }
   }
 
+  Future<void> fetchRaceScores(int raceId) async {
+    final response = await http.get(
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/$raceId/participation/all'),
+        headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> scores = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        scoreRows = scores.map((score) => RaceScores.fromJson(score)).toList();
+      });
+    }
+    else {
+      throw Exception('Failed to load race scores');
+    }
+  }
+
+  Future<void> fetchCurrentUser() async {
+    final response = await http.get(
+      Uri.parse('${settings.apiBaseUrl}/api/users/me'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      final user = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        currentUser = User.fromJson(user);
+      });
+    } else {
+      throw Exception('Failed to load current user');
+    }
+  }
+
+  Color getColor(int index) {
+    if (index == 0) {
+      return Colors.amber;
+    }
+    else if (index == 1) {
+      return Colors.blueGrey.shade300;
+    }
+    else if (index == 2) {
+      return Colors.deepOrange;
+    }
+    else {
+      return Colors.white;
+    }
+  }
+
+  Color getCardColor(int index) {
+    if (scoreRows[index].riderName == currentUser.name && scoreRows[index].riderSurname == currentUser.surname) {
+      return Colors.deepPurple.shade100;
+    }
+    else {
+      return Colors.white;
+    }
+  }
+
+  String convertRuntime(double seconds) {
+    int hours = (seconds / 3600).floor();
+    int minutes = ((seconds - hours * 3600) / 60).floor();
+    int newSeconds = (seconds - hours * 3600 - minutes * 60).floor();
+    return "${hours}h ${minutes}min ${newSeconds}s";
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -189,6 +256,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Future<void> _handleRefresh() async {
     await reloadRaces();
+    await fetchCurrentUser();
     setState(() {});
   }
 
@@ -726,14 +794,81 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget EndedRaceContent(Race race) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'tutaj powinien być ranking wyścigu',
-          style: TextStyle(fontSize: 20.0),
-        ),
-      ],
+    fetchRaceScores(race.id);
+    return SizedBox(
+      height: 1000,
+      child: ListView.builder(
+        itemCount: scoreRows.length,
+        itemBuilder: (context, index) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 16.0,
+                        bottom: 16.0,
+                        right: 16.0
+                    ),
+                    child: Text(
+                      "${index+1}",
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  Expanded(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        color: getCardColor(index),
+                        margin: const EdgeInsets.only(
+                            right: 16.0,
+                            bottom: 16.0),
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(color: getColor(index), width: 3.0),
+                            borderRadius: BorderRadius.circular(10.0)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(0.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      scoreRows[index].riderUsername,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    Text(
+                                      "${scoreRows[index].riderName} ${scoreRows[index].riderSurname}",
+                                      style: Theme.of(context).textTheme.labelMedium,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  //convertRuntime(scoreRows[index].time),
+                                  convertRuntime(6969),
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                  textAlign: TextAlign.right,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ],
+          );
+        },
+      ),
+
     );
   }
 }
@@ -875,4 +1010,35 @@ class Race {
         participationStatus: participationStatus,
         isApproved: json['is_approved']);
   }
+}
+
+class RaceScores {
+  final int id;
+  final String riderName;
+  final String riderSurname;
+  final String riderUsername;
+  final int place;
+  final double time;
+
+  RaceScores(
+  {
+    required this.id,
+    required this.riderName,
+    required this.riderSurname,
+    required this.riderUsername,
+    required this.place,
+    required this.time
+  });
+
+  factory RaceScores.fromJson(Map<String, dynamic> json) {
+    return RaceScores(
+        id: json['id'],
+        riderName: json['rider_name'],
+        riderSurname: json['rider_surname'],
+        riderUsername: json['rider_username'],
+        place: json['place_assigned_overall'],
+        time: json['time_seconds']
+    );
+  }
+
 }
