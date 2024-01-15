@@ -3,6 +3,7 @@ import 'BottomNavigationBar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:move_to_background/move_to_background.dart';
+import 'settings.dart' as settings;
 
 class Ranking extends StatefulWidget {
   final String accessToken;
@@ -26,7 +27,7 @@ class _RankingState extends State<Ranking>{
   Future<void> fetchClassifications() async {
     if (seasonID != 0) {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/rider/season/$seasonID/classification'),
+        Uri.parse('${settings.apiBaseUrl}/api/rider/season/$seasonID/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
       );
 
@@ -52,7 +53,7 @@ class _RankingState extends State<Ranking>{
 
   Future<void> fetchCurrentSeason() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/season/current'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/season/current'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -68,7 +69,7 @@ class _RankingState extends State<Ranking>{
 
   Future<void> fetchSeasons() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/rider/season/all'),
+      Uri.parse('${settings.apiBaseUrl}/api/rider/season/all'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -85,7 +86,7 @@ class _RankingState extends State<Ranking>{
   
   Future<void> fetchCurrentUser() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/users/me'),
+      Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
@@ -103,7 +104,7 @@ class _RankingState extends State<Ranking>{
     if (classificationId != 0) {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:8000/api/rider/rider_classification_link/$classificationId/classification'),
+            '${settings.apiBaseUrl}/api/rider/rider_classification_link/$classificationId/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
       );
 
