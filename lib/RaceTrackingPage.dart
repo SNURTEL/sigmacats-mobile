@@ -89,10 +89,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                     width: 24,
                     height: 24,
                     child: Container(
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            shape: BoxShape.circle
-                        ),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, shape: BoxShape.circle),
                         child: Padding(
                           padding: const EdgeInsets.all(6.0),
                           child: Image.asset(
@@ -209,8 +206,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     setState(() {
       final gpxMap = GpxReader().fromString(utf8.decode(gpxResponse.bodyBytes));
       trackPoints = gpxMap.trks.first.trksegs.first.trkpts
-          .where(
-              (element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
+          .where((element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
           .map((e) => LatLng(e.lat!, e.lon!))
           .toList();
     });
@@ -227,6 +223,40 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
               title: const Text('Śledzenie wyścigu'),
               automaticallyImplyLeading: false,
               centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.cancel_outlined),
+                  onPressed: () {
+                    showDialog(context: context, builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("Zrezygnować?"),
+                        icon: Icon(Icons.mood_bad_outlined),
+                        content: Text("Jeśli wycofasz się z wyścigu, powrót nie będzie możliwy!"),
+                        actions: [
+                          TextButton(
+                              onPressed: (){
+                                Navigator.of(context).pop();
+                              },
+                              child: Text("Anuluj")),
+                          ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.error,
+                                foregroundColor: Theme.of(context).colorScheme.onError
+                              ),
+                              onPressed: () async {
+                                final responseCode = await withdrawFromRace();
+                                if (responseCode == 200) {
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              child: Text("Zrezygnuj"))
+                        ],
+                      );
+                    });
+                  },
+                )
+              ],
             ),
             body: Column(
               children: [
@@ -250,26 +280,23 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               FloatingActionButton.small(
-                                backgroundColor: isFollowing
-                                    ? Theme.of(context).colorScheme.primaryContainer
-                                    : Theme.of(context).colorScheme.surface,
+                                backgroundColor:
+                                    isFollowing ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
                                 shape: CircleBorder(),
                                 onPressed: () {
                                   setState(() {
                                     isFollowing = !isFollowing;
                                     isFitTrack = false;
                                     if (isFollowing && location != null) {
-                                      mapController.move(
-                                          LatLng(location!.coords.latitude, location!.coords.longitude), 18);
+                                      mapController.move(LatLng(location!.coords.latitude, location!.coords.longitude), 18);
                                     }
                                   });
                                 },
                                 child: Icon(Icons.gps_fixed),
                               ),
                               FloatingActionButton.small(
-                                backgroundColor: isFitTrack
-                                    ? Theme.of(context).colorScheme.primaryContainer
-                                    : Theme.of(context).colorScheme.surface,
+                                backgroundColor:
+                                    isFitTrack ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
                                 shape: CircleBorder(),
                                 onPressed: () {
                                   setState(() {
@@ -277,8 +304,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     isFollowing = false;
                                     if (isFitTrack && trackPoints.isNotEmpty) {
                                       mapController.rotate(-mapController.camera.rotationRad);
-                                      mapController.fitCamera(
-                                          CameraFit.coordinates(coordinates: trackPoints, padding: EdgeInsets.all(24)));
+                                      mapController.fitCamera(CameraFit.coordinates(coordinates: trackPoints, padding: EdgeInsets.all(24)));
                                     }
                                   });
                                 },
@@ -323,8 +349,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                         return AlertDialog(
                           icon: Icon(Icons.gps_fixed),
                           title: Text("Wszystko gotowe?"),
-                          content: Text(
-                              "Aplikacja rozpocznie zapisywanie trasy przejazdu. Tej czynności nie da się anulować."),
+                          content: Text("Aplikacja rozpocznie zapisywanie trasy przejazdu. Tej czynności nie da się anulować."),
                           actions: [
                             TextButton(
                                 onPressed: () {
@@ -337,6 +362,15 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     isTracking = true;
                                     isFollowing = true;
                                     isFitTrack = false;
+
+                                    bg.BackgroundGeolocation.getCurrentPosition(
+                                            maximumAge: 0, persist: false, desiredAccuracy: 0, timeout: 30000, samples: 1)
+                                        .then((bg.Location location) {
+                                      print('[getCurrentPosition] - $location');
+                                      this.location = location;
+                                    }).catchError((error) {
+                                      print('[getCurrentPosition] ERROR: $error');
+                                    });
                                   });
                                   Navigator.of(context).pop();
                                 },
@@ -346,11 +380,10 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                       });
                 },
           child: Text('START',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onTertiary,
-                  fontSize: 16,
-                  height: 1.2)),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onTertiary, fontSize: 16, height: 1.2)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.tertiary,
             foregroundColor: Theme.of(context).colorScheme.onTertiary,
@@ -379,11 +412,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                     );
                   });
                 },
-          child: Text('STOP',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(fontWeight: FontWeight.w500, fontSize: 16, height: 1.2)),
+          child:
+              Text('STOP', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500, fontSize: 16, height: 1.2)),
           style: OutlinedButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.tertiary,
             side: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 5),
@@ -482,7 +512,6 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();
                                 },
-                    
                         ),
                 ),
               ),
@@ -509,7 +538,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     request.headers['Authorization'] = "Bearer ${widget.accessToken}";
     return await request.send().then((streamedResponse) async {
       final response = await http.Response.fromStream(streamedResponse);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 202) {
         print("Uploaded!");
       } else {
         print("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
@@ -519,8 +548,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     });
   }
 
-  Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps,
-      [String name = "", String desc = "", DateTime? time]) {
+  Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps, [String name = "", String desc = "", DateTime? time]) {
     time = time ?? DateTime.now();
     final gpx = Gpx();
     gpx.version = '1.1';
@@ -538,6 +566,20 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
       ])
     ];
     return gpx;
+  }
+
+  Future<int> withdrawFromRace() async {
+    final response = await http.post(
+      Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.raceId}/withdraw'),
+      headers: {'Authorization': 'Bearer ${widget.accessToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      showNotification(context, 'Wycofano udział z wyścigu');
+    } else {
+      showNotification(context, 'Błąd podczas wycofywania udziału z wyścigu');
+    }
+    return response.statusCode;
   }
 }
 

@@ -26,6 +26,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
   int currentIndex = 2;
   List<Race> itemList = [];
   String gpxMapLink = '';
+  bool isApproved = false;
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
   final mapController = MapController();
@@ -88,6 +89,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
         gpxMapLink = raceDetails['checkpoints_gpx_file'];
         fetchGpxMap();
       }
+      isApproved = (raceDetails['race_participations'])?.any((e) => e['place_assigned_overall'] != null) ??
+          false || (raceDetails['status'] == 'ended' && raceDetails['race_participations'].isEmpty);
     } else {
       throw Exception('Failed to load race details');
     }
@@ -355,6 +358,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
       return PendingRaceContent(race);
     } else if (race.status == 'in_progress') {
       return InProgressRaceContent(race);
+    } else if (race.status == 'ended' && isApproved == false) {
+      return FinishedRaceContent(race);
     } else if (race.status == 'ended') {
       return EndedRaceContent(race);
     } else {
@@ -457,6 +462,66 @@ class _RaceParticipationState extends State<RaceParticipation> {
             ),
           ],
         ),
+        SizedBox(
+          height: 16,
+        ),
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            late Icon icon;
+            late String msg;
+            switch (race.participationStatus) {
+              case "approved":
+                icon = Icon(
+                  Icons.done,
+                  color: Colors.green,
+                  size: 32,
+                );
+                msg = "Zatwierdzone";
+                break;
+              case "rejected":
+                icon = Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 32,
+                );
+                msg = "Odrzucone";
+                break;
+              default:
+                icon = Icon(
+                  Icons.question_mark,
+                  color: Colors.amber,
+                  size: 32,
+                );
+                msg = "Oczekuje na zatwierdzenie";
+                break;
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: icon,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Status uczestnictwa",
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      msg,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }
@@ -513,8 +578,8 @@ class _RaceParticipationState extends State<RaceParticipation> {
             const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: race.participationStatus == 'approved'
-                  ? () {
-                      Navigator.push(
+                  ? () async {
+                      await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => RaceTrackingPage(
@@ -522,6 +587,10 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               accessToken: widget.accessToken,
                             ),
                           ));
+                      setState(() async {
+                        await _handleRefresh();
+                        await fetchRaceDetails(race.id);
+                      });
                     }
                   : null,
               style: ElevatedButton.styleFrom(
@@ -531,22 +600,36 @@ class _RaceParticipationState extends State<RaceParticipation> {
             ),
           ],
         ),
-        SizedBox(height: 16,),
+        SizedBox(
+          height: 16,
+        ),
         StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             late Icon icon;
             late String msg;
             switch (race.participationStatus) {
               case "approved":
-                icon = Icon(Icons.done, color: Colors.green, size: 32,);
+                icon = Icon(
+                  Icons.done,
+                  color: Colors.green,
+                  size: 32,
+                );
                 msg = "Zatwierdzone";
                 break;
               case "rejected":
-                icon = Icon(Icons.close, color: Colors.red, size: 32,);
+                icon = Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 32,
+                );
                 msg = "Odrzucone";
                 break;
               default:
-                icon = Icon(Icons.question_mark, color: Colors.amber, size: 32,);
+                icon = Icon(
+                  Icons.question_mark,
+                  color: Colors.amber,
+                  size: 32,
+                );
                 msg = "Oczekuje na zatwierdzenie";
                 break;
             }
@@ -563,8 +646,14 @@ class _RaceParticipationState extends State<RaceParticipation> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Status uczestnictwa", style: Theme.of(context).textTheme.labelMedium,),
-                    Text(msg, style: Theme.of(context).textTheme.titleLarge,)
+                    Text(
+                      "Status uczestnictwa",
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      msg,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )
                   ],
                 ),
               ],
@@ -576,7 +665,65 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget FinishedRaceContent(Race race) {
-    return Text("placeholder");
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                      initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                      initialZoom: 13,
+                      interactionOptions: InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                  children: [
+                    openStreetMapTileLayer,
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: points,
+                          strokeWidth: 3,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+                height: 128,
+                child: Text(
+                  "Trasa przejazdu została przesłana! Wyniki będą dostępne po zatwierdzeniu ich przez koordynatora.",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ))
+          ],
+        ),
+      ],
+    );
   }
 
   Widget EndedRaceContent(Race race) {
@@ -715,6 +862,7 @@ class Race {
     if (json['meetup_timestamp'] != null) {
       meetupTimestamp = json['meetup_timestamp'];
     }
+
     return Race(
         id: json['id'],
         name: json['name'],

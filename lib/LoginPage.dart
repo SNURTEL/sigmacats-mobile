@@ -35,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
           showNotification(context, 'Błąd logowania.');
         }
       } catch (e) {
+        print(e);
         showNotification(context, 'Wystąpił błąd.');
       }
     }

@@ -198,6 +198,10 @@ class _LocationPageState extends State<LocationPage> {
                             .then((bg.Location location) {
                           print('[getCurrentPosition] - $location');
                           this.location = location;
+                          if (location != null) {
+                            locationHistory.add(LatLng(this.location!.coords.latitude, this.location!.coords.longitude));
+                            locationTimestamps.add(DateTime.parse(location.timestamp));
+                          }
                         }).catchError((error) {
                           print('[getCurrentPosition] ERROR: $error');
                         });

@@ -82,7 +82,7 @@ class _RaceListState extends State<RaceList> {
                         },
                         child: ColorFiltered(
                           colorFilter: ColorFilter.mode(
-                            itemList[index].status == 'ended'
+                            (itemList[index].status == 'ended' && itemList[index].isApproved)
                                 ? Theme.of(context)
                                     .colorScheme
                                     .surface
@@ -187,6 +187,7 @@ class Race {
   final String eventGraphic;
   final String timeStart;
   final String timeEnd;
+  final bool isApproved;
 
   Race(
       {required this.id,
@@ -194,7 +195,8 @@ class Race {
       required this.status,
       required this.eventGraphic,
       required this.timeStart,
-      required this.timeEnd});
+      required this.timeEnd,
+      required this.isApproved});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     return Race(
@@ -204,6 +206,7 @@ class Race {
       eventGraphic: json['event_graphic_file'],
       timeStart: json['start_timestamp'],
       timeEnd: json['end_timestamp'],
+      isApproved: json['is_approved'],
     );
   }
 }
