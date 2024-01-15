@@ -59,7 +59,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
       }
       if (todayRace != null) {
         fetchRaceDetails(todayRace!.id);
+        fetchRaceScores(todayRace!.id);
       }
+
     });
   }
 
@@ -182,10 +184,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Color getCardColor(int index) {
     if (scoreRows[index].riderName == currentUser.name && scoreRows[index].riderSurname == currentUser.surname) {
-      return Colors.deepPurple.shade100;
-    }
-    else {
-      return Colors.white;
+      return Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5);
+    } else {
+      return Theme.of(context).colorScheme.surface;
     }
   }
 
@@ -794,7 +795,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget EndedRaceContent(Race race) {
-    fetchRaceScores(race.id);
     return SizedBox(
       height: 1000,
       child: ListView.builder(
