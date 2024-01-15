@@ -14,7 +14,7 @@ class Ranking extends StatefulWidget {
   _RankingState createState() => _RankingState();
 }
 
-class _RankingState extends State<Ranking>{
+class _RankingState extends State<Ranking> {
   int currentIndex = 1;
   int seasonID = 0;
   List<Classification> classificationsParsed = [];
@@ -40,10 +40,9 @@ class _RankingState extends State<Ranking>{
         });
       } else {
         // If the server did not return a 200 OK response, throw an exception
-        throw Exception('Failed to load classifications');
+        throw Exception('Failed to load classifications: ${response.statusCode}');
       }
-    }
-    else {
+    } else {
       setState(() {
         classificationsParsed = [Classification(id: 0, name: 'Wybierz klasyfikację', description: 'brak')];
         classificationDropdownValue = 'Wybierz klasyfikację';
@@ -63,7 +62,7 @@ class _RankingState extends State<Ranking>{
         seasonID = Season.fromJson(season).id;
       });
     } else {
-      throw Exception('Failed to load current season');
+      throw Exception('Failed to load current season: ${response.statusCode}');
     }
   }
 
@@ -80,10 +79,10 @@ class _RankingState extends State<Ranking>{
         seasonsParsed.insert(0, Season(id: 0, name: 'Wybierz sezon', startTimestamp: 'brak', endTimestamp: 'brak'));
       });
     } else {
-      throw Exception('Failed to load seasons');
+      throw Exception('Failed to load seasons: ${response.statusCode}');
     }
   }
-  
+
   Future<void> fetchCurrentUser() async {
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/users/me'),
@@ -96,15 +95,14 @@ class _RankingState extends State<Ranking>{
         currentUser = User.fromJson(user);
       });
     } else {
-      throw Exception('Failed to load current user');
+      throw Exception('Failed to load current user: ${response.statusCode}');
     }
   }
 
   Future<void> fetchScores(int classificationId) async {
     if (classificationId != 0) {
       final response = await http.get(
-        Uri.parse(
-            '${settings.apiBaseUrl}/api/rider/rider_classification_link/$classificationId/classification'),
+        Uri.parse('${settings.apiBaseUrl}/api/rider/rider_classification_link/$classificationId/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
       );
 
@@ -119,8 +117,7 @@ class _RankingState extends State<Ranking>{
           scoreRows = [];
         });
       }
-    }
-    else {
+    } else {
       setState(() {
         scoreRows = [];
       });
@@ -141,27 +138,23 @@ class _RankingState extends State<Ranking>{
   Color getColor(int index) {
     if (index == 0) {
       return Colors.amber;
-    }
-    else if (index == 1) {
+    } else if (index == 1) {
       return Colors.blueGrey.shade300;
-    }
-    else if (index == 2) {
+    } else if (index == 2) {
       return Colors.deepOrange;
-    }
-    else {
+    } else {
       return Colors.white;
     }
   }
 
   Color getCardColor(int index) {
     if (scoreRows[index].name == currentUser.name && scoreRows[index].surname == currentUser.surname) {
-      return Colors.deepPurple.shade100;
-    }
-    else {
-      return Colors.white;
+      return Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5);
+    } else {
+      return Theme.of(context).colorScheme.surface;
     }
   }
-  
+
   int getClassificationId(String? name) {
     for (final classification in classificationsParsed) {
       if (classification.name == name) {
@@ -189,188 +182,163 @@ class _RankingState extends State<Ranking>{
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvoked: (bool didPop) {
-        if (didPop) {
-          return;
-        }
-        MoveToBackground.moveTaskToBack();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Ranking'),
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-        ),
-        body: Column(
-            children: <Widget> [
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: DropdownButton<String>(
-                      value: classificationDropdownValue,
-                      icon: const Icon(Icons.arrow_downward),
-                      elevation: 16,
-                      style: const TextStyle(color: Colors.deepPurple),
-                      underline: Container(
-                        height: 2,
-                        color: Colors.deepPurpleAccent,
-                      ),
-                      onChanged: (String? value) {
-                        int classificationId = getClassificationId(value);
-                        fetchScores(classificationId);
+        canPop: false,
+        onPopInvoked: (bool didPop) {
+          if (didPop) {
+            return;
+          }
+          MoveToBackground.moveTaskToBack();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Ranking'),
+            automaticallyImplyLeading: false,
+            centerTitle: true,
+          ),
+          body: Column(children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                DropdownMenu<String>(
+                  width: 170,
+                  initialSelection: classificationDropdownValue,
+                  onSelected: (String? value) {
+                    int classificationId = getClassificationId(value);
+                    fetchScores(classificationId);
+                    setState(() {
+                      classificationDropdownValue = value!;
+                    });
+                  },
+                  textStyle: TextStyle(overflow: TextOverflow.fade),
+                  dropdownMenuEntries: classificationsParsed.map((c) => c.name).map<DropdownMenuEntry<String>>((String value) {
+                    return DropdownMenuEntry<String>(
+                      value: value,
+                      label: value,
+                    );
+                  }).toList(),
+                ),
+                DropdownMenu<String>(
+                  width: 170,
+                  initialSelection: seasonDropdownValue,
+                  textStyle: TextStyle(overflow: TextOverflow.fade),
+                  onSelected: (String? value) {
+                    for (final season in seasonsParsed) {
+                      if (season.name == value) {
                         setState(() {
-                          classificationDropdownValue = value!;
+                          seasonID = season.id;
                         });
-                      },
-                      items: classificationsParsed.map((c) => c.name).map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 80),
-                    child: DropdownButton<String>(
-                      value: seasonDropdownValue,
-                      icon: const Icon(Icons.arrow_downward),
-                      elevation: 16,
-                      style: const TextStyle(color: Colors.deepPurple),
-                      underline: Container(
-                        height: 2,
-                        color: Colors.deepPurpleAccent,
-                      ),
-                      onChanged: (String? value) {
-                        for (final season in seasonsParsed) {
-                          if (season.name == value) {
-                            setState(() {
-                              seasonID = season.id;
-                            });
-                            break;
-                          }
-                        }
-                        fetchClassifications();
-                        setState(() {
-                          seasonDropdownValue = value!;
-                          classificationDropdownValue = 'Wybierz klasyfikację';
-                          scoreRows = [];
-                        });
-                      },
-                      items: seasonsParsed.map((s) => s.name).map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: scoreRows.length,
-                  itemBuilder: (context, index) {
-                    return Column(
-                      children: [
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                left: 16.0,
-                                bottom: 16.0,
-                                right: 16.0
-                              ),
-                              child: Text(
-                                "${index+1}",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
+                        break;
+                      }
+                    }
+                    fetchClassifications();
+                    setState(() {
+                      seasonDropdownValue = value!;
+                      classificationDropdownValue = 'Wybierz klasyfikację';
+                      scoreRows = [];
+                    });
+                  },
+                  dropdownMenuEntries: seasonsParsed.map((s) => s.name).map<DropdownMenuEntry<String>>((String value) {
+                    return DropdownMenuEntry<String>(
+                      value: value,
+                      label: value,
+                    );
+                  }).toList(),
+                )
+              ],
+            ),
+            SizedBox(height: 32,),
+            Expanded(
+              child: ListView.builder(
+                itemCount: scoreRows.length,
+                itemBuilder: (context, index) {
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0, bottom: 16.0, right: 16.0),
+                            child: Text(
+                              "${index + 1}",
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            Expanded(
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: Card(
-                                    color: getCardColor(index),
-                                    margin: const EdgeInsets.only(
-                                        right: 16.0,
-                                        bottom: 16.0),
-                                    shape: RoundedRectangleBorder(
-                                        side: BorderSide(color: getColor(index), width: 3.0),
-                                        borderRadius: BorderRadius.circular(10.0)
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(0.0),
-                                            child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.start,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  scoreRows[index].username,
-                                                  style: Theme.of(context).textTheme.titleLarge,
-                                                ),
-                                                Text(
-                                                  "${scoreRows[index].name} ${scoreRows[index].surname}",
-                                                  style: Theme.of(context).textTheme.labelMedium,
-                                                ),
-                                              ],
+                          ),
+                          Expanded(
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Card(
+                                color: getCardColor(index),
+                                margin: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+                                shape: RoundedRectangleBorder(
+                                    side: BorderSide(color: getColor(index), width: 3.0), borderRadius: BorderRadius.circular(10.0)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(0.0),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              scoreRows[index].username,
+                                              style: Theme.of(context).textTheme.titleLarge,
                                             ),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                              "${scoreRows[index].score}",
-                                              style: Theme.of(context).textTheme.titleMedium,
-                                              textAlign: TextAlign.right,
+                                            Text(
+                                              "${scoreRows[index].name} ${scoreRows[index].surname}",
+                                              style: Theme.of(context).textTheme.labelMedium,
                                             ),
-                                          )
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
+                                      Expanded(
+                                        child: Text(
+                                          "${scoreRows[index].score}",
+                                          style: Theme.of(context).textTheme.titleMedium,
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
-                            )
-                          ],
-                        )
-                      ],
-                    );
-                  },
-                ),
-              )
-            ]
-        ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-          // Handle navigation based on index
-          switch (currentIndex) {
-            case 0:
-            // Wyścigi
-              Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
-              break;
-            case 1:
-            // Ranking
-              break;
-            case 2:
-            // Aktualny wyścig
-              Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
-              break;
-            case 3:
-            // Mój profil
-              Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
-              break;
-          }
-        },
-      ),
-    )
-    );
+                              ),
+                            ),
+                          )
+                        ],
+                      )
+                    ],
+                  );
+                },
+              ),
+            )
+          ]),
+          bottomNavigationBar: BottomNavigationBarWidget(
+            currentIndex: currentIndex,
+            onTap: (index) {
+              setState(() {
+                currentIndex = index;
+              });
+              // Handle navigation based on index
+              switch (currentIndex) {
+                case 0:
+                  // Wyścigi
+                  Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
+                  break;
+                case 1:
+                  // Ranking
+                  break;
+                case 2:
+                  // Aktualny wyścig
+                  Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
+                  break;
+                case 3:
+                  // Mój profil
+                  Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
+                  break;
+              }
+            },
+          ),
+        ));
   }
 }
 
@@ -382,11 +350,7 @@ class Classification {
   Classification({required this.id, required this.name, required this.description});
 
   factory Classification.fromJson(Map<String, dynamic> json) {
-    return Classification(
-      id: json['id'],
-      name: json['name'],
-      description: json['description']
-    );
+    return Classification(id: json['id'], name: json['name'], description: json['description']);
   }
 }
 
@@ -417,12 +381,7 @@ class ScoreRow {
   ScoreRow({required this.score, required this.name, required this.surname, required this.username});
 
   factory ScoreRow.fromJson(Map<String, dynamic> json) {
-    return ScoreRow(
-        score: json['score'],
-        name: json['name'],
-        surname: json['surname'],
-        username: json['username']
-    );
+    return ScoreRow(score: json['score'], name: json['name'], surname: json['surname'], username: json['username']);
   }
 }
 
@@ -430,14 +389,10 @@ class User {
   final String name;
   final String surname;
   final String username;
-  
+
   User({required this.name, required this.surname, required this.username});
-  
+
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-        name: json['name'],
-        surname: json['surname'],
-        username: json['username']
-    );
+    return User(name: json['name'], surname: json['surname'], username: json['username']);
   }
 }

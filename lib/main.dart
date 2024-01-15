@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'CustomColorScheme.dart';
 import 'HomePage.dart';
-import 'LocationPage.dart';
 import 'LoginPage.dart';
+import 'RaceTrackingPage.dart';
 import 'RegistrationPage.dart';
 import 'RaceList.dart';
 import 'Ranking.dart';
@@ -32,6 +32,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  @override
+  void initState() {
+    super.initState();
+    bg.BackgroundGeolocation.stop();
+    bg.BackgroundGeolocation.removeListeners();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -72,11 +79,6 @@ class _AppState extends State<App> {
           case '/user_profile':
             final String accessToken = settings.arguments as String;
             builder = (context) => UserProfile(accessToken: accessToken);
-            break;
-          case '/location':
-          // final String accessToken = settings.arguments as String;
-          // builder = (context) => LocationPage(accessToken: accessToken);;
-            builder = (context) => LocationPage();
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');

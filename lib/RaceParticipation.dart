@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:sigmactas_alleycat/RaceTrackingPage.dart';
 import 'BottomNavigationBar.dart';
 import 'RaceDetails.dart';
 import 'Ranking.dart';
@@ -15,24 +16,22 @@ import 'settings.dart' as settings;
 class RaceParticipation extends StatefulWidget {
   final String accessToken;
 
-  const RaceParticipation({Key? key, required this.accessToken})
-      : super(key: key);
+  const RaceParticipation({Key? key, required this.accessToken}) : super(key: key);
 
   @override
   _RaceParticipationState createState() => _RaceParticipationState();
 }
 
 class _RaceParticipationState extends State<RaceParticipation> {
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   int currentIndex = 2;
-  bool raceStarted = false;
   List<Race> itemList = [];
   List<RaceScores> scoreRows = [];
   User currentUser = User(name: 'default', surname: 'default', username: 'd');
   String gpxMapLink = '';
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
+  Race? todayRace;
   final mapController = MapController();
 
   TileLayer get openStreetMapTileLayer => TileLayer(
@@ -47,7 +46,23 @@ class _RaceParticipationState extends State<RaceParticipation> {
   @override
   void initState() {
     super.initState();
-    fetchRaceList();
+    reloadRaces();
+  }
+
+  Future<void> reloadRaces() async {
+    fetchRaceList().then((value) {
+      for (Race race in itemList) {
+        if (race.userParticipating && isToday(race.timeStart)) {
+          todayRace = race;
+          break;
+        }
+      }
+      if (todayRace != null) {
+        fetchRaceDetails(todayRace!.id);
+        fetchRaceScores(todayRace!.id);
+      }
+
+    });
   }
 
   @override
@@ -59,15 +74,13 @@ class _RaceParticipationState extends State<RaceParticipation> {
   void fitMap() {
     mapController.fitCamera(
       CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(pointsWpt
-              .where((e) => e.lat != null && e.lon != null)
-              .map((e) => LatLng(e.lat!, e.lon!))
-              .toList()),
+          bounds:
+              LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
           padding: const EdgeInsets.all(32)),
     );
   }
 
-  Future<void> fetchRaceList() async {
+  Future<List<Race>> fetchRaceList() async {
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -78,8 +91,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
       setState(() {
         itemList = races.map((race) => Race.fromJson(race)).toList();
       });
+      return races.map((race) => Race.fromJson(race)).toList();
     } else {
-      throw Exception('Failed to load races');
+      throw Exception('Failed to load races: ${response.statusCode}');
     }
   }
 
@@ -90,8 +104,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> raceDetails =
-          json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> raceDetails = json.decode(utf8.decode(response.bodyBytes));
       if (raceDetails['checkpoints_gpx_file'].contains("/")) {
         gpxMapLink = raceDetails['checkpoints_gpx_file'];
         fetchGpxMap();
@@ -111,11 +124,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
         Gpx gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
         pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
         points = gpxMap.trks.first.trksegs.first.trkpts
-            .where((element) =>
-                element.lat != null &&
-                element.lon != null &&
-                element.lat!.isFinite &&
-                element.lon!.isFinite)
+            .where((element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
             .map((e) => LatLng(e.lat!, e.lon!))
             .toList();
         fitMap();
@@ -175,10 +184,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Color getCardColor(int index) {
     if (scoreRows[index].riderName == currentUser.name && scoreRows[index].riderSurname == currentUser.surname) {
-      return Colors.deepPurple.shade100;
-    }
-    else {
-      return Colors.white;
+      return Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5);
+    } else {
+      return Theme.of(context).colorScheme.surface;
     }
   }
 
@@ -191,13 +199,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   @override
   Widget build(BuildContext context) {
-    Race? todayRace;
-    for (Race race in itemList) {
-      if (race.userParticipating && isToday(race.timeStart)) {
-        todayRace = race;
-        break;
-      }
-    }
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
@@ -220,13 +221,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
-                constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height -
-                        3 * AppBar().preferredSize.height),
+                constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 3 * AppBar().preferredSize.height),
                 child: Center(
-                  child: todayRace != null
-                      ? buildTodayRaceWidget(todayRace)
-                      : buildDefaultWidget(),
+                  child: todayRace != null ? buildTodayRaceWidget(todayRace!) : NoRaceContent(),
                 ),
               ),
             ),
@@ -240,47 +237,36 @@ class _RaceParticipationState extends State<RaceParticipation> {
             });
             switch (currentIndex) {
               case 0:
-                Navigator.pushReplacementNamed(context, '/race_list',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
                 break;
               case 1:
-                Navigator.pushReplacementNamed(context, '/ranking',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
                 break;
               case 2:
                 // RaceParticipation
                 break;
               case 3:
-                Navigator.pushReplacementNamed(context, '/user_profile',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
                 break;
             }
           },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/location',
-                arguments: widget.accessToken);
-          },
-          child: const Icon(Icons.location_on_sharp),
         ),
       ),
     );
   }
 
   Future<void> _handleRefresh() async {
-    await fetchRaceList();
+    await reloadRaces();
     await fetchCurrentUser();
     setState(() {});
   }
 
-  Widget buildDefaultWidget() {
+  Widget NoRaceContent() {
     int nextRaceIndex = findNextRaceIndex();
 
     return Container(
       alignment: Alignment.bottomCenter,
-      height: MediaQuery.of(context).size.height -
-          3 * AppBar().preferredSize.height,
+      height: MediaQuery.of(context).size.height - 3 * AppBar().preferredSize.height,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -351,9 +337,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                               topLeft: Radius.circular(16.0),
                               bottomLeft: Radius.circular(16.0),
                             ),
-                            child: itemList[nextRaceIndex]
-                                    .eventGraphic
-                                    .contains("/")
+                            child: itemList[nextRaceIndex].eventGraphic.contains("/")
                                 ? Image.network(
                                     '${settings.apiBaseUrl}${itemList[nextRaceIndex].eventGraphic}',
                                     fit: BoxFit.fitHeight,
@@ -379,8 +363,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text(
-                                  formatDateString(
-                                      itemList[nextRaceIndex].timeStart),
+                                  formatDateString(itemList[nextRaceIndex].timeStart),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
@@ -429,9 +412,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
     for (int i = 0; i < itemList.length; i++) {
       DateTime startDate = DateTime.parse(itemList[i].timeStart);
-      if (itemList[i].userParticipating &&
-          startDate.isAfter(today) &&
-          (closestDate == today || startDate.isBefore(closestDate))) {
+      if (itemList[i].userParticipating && startDate.isAfter(today) && (closestDate == today || startDate.isBefore(closestDate))) {
         closestIndex = i;
         closestDate = startDate;
       }
@@ -442,144 +423,60 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   Widget buildTodayRaceWidget(Race race) {
     if (race.status == 'pending') {
-      fetchRaceDetails(race.id);
-      DateTime startTime = DateTime.parse(race.timeStart);
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          race.name,
-                          style: Theme.of(context).textTheme.headlineLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              SizedBox(
-                height: 300.0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
-                  child: ColorFiltered(
-                    colorFilter: ColorFilter.mode(
-                      Theme.of(context).colorScheme.surface.withOpacity(0.62),
-                      BlendMode.srcOver,
-                    ),
-                    child: FlutterMap(
-                      mapController: mapController,
-                      options: MapOptions(
-                          initialCenter: const LatLng(
-                              52.23202828872916, 21.006132649819673), //Warsaw
-                          initialZoom: 13,
-                          interactionOptions: InteractionOptions(
-                              flags: gpxMapLink.contains("/")
-                                  ? InteractiveFlag.all
-                                  : InteractiveFlag.none)),
-                      children: [
-                        openStreetMapTileLayer,
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: points,
-                              strokeWidth: 3,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Wyścig rozpocznie się za:',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              CountdownTimer(startTime: startTime),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RaceDetails(
-                        race.id,
-                        accessToken: widget.accessToken,
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Szczegóły wyścigu'),
-              ),
-            ],
-          ),
-        ],
-      );
+      return PendingRaceContent(race);
     } else if (race.status == 'in_progress') {
-      fetchRaceDetails(race.id);
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          race.name,
-                          style: Theme.of(context).textTheme.headlineLarge,
-                        ),
-                      ],
-                    ),
+      return InProgressRaceContent(race);
+    } else if (race.status == 'ended' && race.isApproved == false) {
+      return FinishedRaceContent(race);
+    } else if (race.status == 'ended') {
+      return EndedRaceContent(race);
+    } else {
+      return NoRaceContent();
+    }
+  }
+
+  Widget PendingRaceContent(Race race) {
+    DateTime startTime = DateTime.parse(race.timeStart);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                height: 300.0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
+            ),
+            const SizedBox(height: 8.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    Theme.of(context).colorScheme.surface.withOpacity(0.62),
+                    BlendMode.srcOver,
+                  ),
                   child: FlutterMap(
                     mapController: mapController,
                     options: MapOptions(
-                        initialCenter: const LatLng(
-                            52.23202828872916, 21.006132649819673), //Warsaw
+                        initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
                         initialZoom: 13,
-                        interactionOptions: InteractionOptions(
-                            flags: gpxMapLink.contains("/")
-                                ? InteractiveFlag.all
-                                : InteractiveFlag.none)),
+                        interactionOptions:
+                            InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
                     children: [
                       openStreetMapTileLayer,
                       PolylineLayer(
@@ -595,105 +492,384 @@ class _RaceParticipationState extends State<RaceParticipation> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    raceStarted = !raceStarted;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  fixedSize: const Size(double.infinity, 50.0),
-                ),
-                child: Text(
-                    raceStarted ? 'Zakończ wyścig' : 'Rozpocznij wyścig!',
-                    style: const TextStyle(
-                        fontSize: 20.0, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ],
-      );
-    } else if (race.status == 'ended') {
-      fetchRaceScores(race.id);
-      return SizedBox(
-              height: 1000,
-              child: ListView.builder(
-              itemCount: scoreRows.length,
-                itemBuilder: (context, index) {
-                  return Column(
+            ),
+            const SizedBox(height: 8.0),
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 16.0,
-                                bottom: 16.0,
-                                right: 16.0
+                      Text(
+                        'Wyścig rozpocznie się za:',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            CountdownTimer(startTime: startTime),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RaceDetails(
+                      race.id,
+                      accessToken: widget.accessToken,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Szczegóły wyścigu'),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 16,
+        ),
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            late Icon icon;
+            late String msg;
+            switch (race.participationStatus) {
+              case "approved":
+                icon = Icon(
+                  Icons.done,
+                  color: Colors.green,
+                  size: 32,
+                );
+                msg = "Zatwierdzone";
+                break;
+              case "rejected":
+                icon = Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 32,
+                );
+                msg = "Odrzucone";
+                break;
+              default:
+                icon = Icon(
+                  Icons.question_mark,
+                  color: Colors.amber,
+                  size: 32,
+                );
+                msg = "Oczekuje na zatwierdzenie";
+                break;
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: icon,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Status uczestnictwa",
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      msg,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget InProgressRaceContent(Race race) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                      initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                      initialZoom: 13,
+                      interactionOptions: InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                  children: [
+                    openStreetMapTileLayer,
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: points,
+                          strokeWidth: 3,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: race.participationStatus == 'approved'
+                  ? () async {
+                      await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RaceTrackingPage(
+                              race.id,
+                              accessToken: widget.accessToken,
                             ),
-                            child: Text(
-                              "${index+1}",
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          Expanded(
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Card(
-                                color: getCardColor(index),
-                                margin: const EdgeInsets.only(
-                                    right: 16.0,
-                                    bottom: 16.0),
-                                shape: RoundedRectangleBorder(
-                                    side: BorderSide(color: getColor(index), width: 3.0),
-                                    borderRadius: BorderRadius.circular(10.0)
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(0.0),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              scoreRows[index].riderUsername,
-                                              style: Theme.of(context).textTheme.titleMedium,
-                                            ),
-                                            Text(
-                                              "${scoreRows[index].riderName} ${scoreRows[index].riderSurname}",
-                                              style: Theme.of(context).textTheme.labelMedium,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          //convertRuntime(scoreRows[index].time),
-                                          convertRuntime(6969),
-                                          style: Theme.of(context).textTheme.labelLarge,
-                                          textAlign: TextAlign.right,
-                                        ),
-                                      )
-                                    ],
-                                  ),
+                          ));
+                      setState(() async {
+                        await _handleRefresh();
+                        await fetchRaceDetails(race.id);
+                      });
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                fixedSize: const Size(double.infinity, 50.0),
+              ),
+              child: Text('Przejdź do wyścigu', style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 16,
+        ),
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            late Icon icon;
+            late String msg;
+            switch (race.participationStatus) {
+              case "approved":
+                icon = Icon(
+                  Icons.done,
+                  color: Colors.green,
+                  size: 32,
+                );
+                msg = "Zatwierdzone";
+                break;
+              case "rejected":
+                icon = Icon(
+                  Icons.close,
+                  color: Colors.red,
+                  size: 32,
+                );
+                msg = "Odrzucone";
+                break;
+              default:
+                icon = Icon(
+                  Icons.question_mark,
+                  color: Colors.amber,
+                  size: 32,
+                );
+                msg = "Oczekuje na zatwierdzenie";
+                break;
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: icon,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Status uczestnictwa",
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      msg,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget FinishedRaceContent(Race race) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        race.name,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+              height: 300.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                      initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw
+                      initialZoom: 13,
+                      interactionOptions: InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                  children: [
+                    openStreetMapTileLayer,
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: points,
+                          strokeWidth: 3,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            SizedBox(
+                height: 128,
+                child: Text(
+                  "Trasa przejazdu została przesłana! Wyniki będą dostępne po zatwierdzeniu ich przez koordynatora.",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ))
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget EndedRaceContent(Race race) {
+    return SizedBox(
+      height: 1000,
+      child: ListView.builder(
+        itemCount: scoreRows.length,
+        itemBuilder: (context, index) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 16.0,
+                        bottom: 16.0,
+                        right: 16.0
+                    ),
+                    child: Text(
+                      "${index+1}",
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  Expanded(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        color: getCardColor(index),
+                        margin: const EdgeInsets.only(
+                            right: 16.0,
+                            bottom: 16.0),
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(color: getColor(index), width: 3.0),
+                            borderRadius: BorderRadius.circular(10.0)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(0.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      scoreRows[index].riderUsername,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    Text(
+                                      "${scoreRows[index].riderName} ${scoreRows[index].riderSurname}",
+                                      style: Theme.of(context).textTheme.labelMedium,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          )
-                        ],
-                      )
-                    ],
-                  );
-                },
-              ),
+                              Expanded(
+                                child: Text(
+                                  //convertRuntime(scoreRows[index].time),
+                                  convertRuntime(6969),
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                  textAlign: TextAlign.right,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ],
+          );
+        },
+      ),
 
-      );
-    } else {
-      return buildDefaultWidget();
-    }
+    );
   }
 }
 
@@ -726,9 +902,7 @@ class CountdownTimer extends StatelessWidget {
               ),
               CountdownCard(
                 label: 'min',
-                value: (duration.inMinutes.remainder(60))
-                    .toString()
-                    .padLeft(2, '0'),
+                value: (duration.inMinutes.remainder(60)).toString().padLeft(2, '0'),
                 left: 8.0,
                 right: 8.0,
               ),
@@ -738,9 +912,7 @@ class CountdownTimer extends StatelessWidget {
               ),
               CountdownCard(
                 label: 's',
-                value: (duration.inSeconds.remainder(60))
-                    .toString()
-                    .padLeft(2, '0'),
+                value: (duration.inSeconds.remainder(60)).toString().padLeft(2, '0'),
                 left: 8.0,
                 right: 0.0,
               ),
@@ -771,12 +943,7 @@ class CountdownCard extends StatelessWidget {
   final double left;
   final double right;
 
-  const CountdownCard(
-      {super.key,
-      required this.label,
-      required this.value,
-      required this.left,
-      required this.right});
+  const CountdownCard({super.key, required this.label, required this.value, required this.left, required this.right});
 
   @override
   Widget build(BuildContext context) {
@@ -806,7 +973,9 @@ class Race {
   final String eventGraphic;
   final String timeStart;
   final String timeMeetUp;
+  final String? participationStatus;
   final bool userParticipating;
+  final bool isApproved;
 
   Race(
       {required this.id,
@@ -815,7 +984,9 @@ class Race {
       required this.eventGraphic,
       required this.timeStart,
       required this.timeMeetUp,
-      required this.userParticipating});
+      required this.userParticipating,
+      required this.participationStatus,
+      required this.isApproved});
 
   factory Race.fromJson(Map<String, dynamic> json) {
     bool participating = false;
@@ -827,15 +998,17 @@ class Race {
     if (json['meetup_timestamp'] != null) {
       meetupTimestamp = json['meetup_timestamp'];
     }
+
     return Race(
-      id: json['id'],
-      name: json['name'],
-      status: json['status'],
-      eventGraphic: json['event_graphic_file'],
-      timeStart: json['start_timestamp'],
-      timeMeetUp: meetupTimestamp,
-      userParticipating: participating,
-    );
+        id: json['id'],
+        name: json['name'],
+        status: json['status'],
+        eventGraphic: json['event_graphic_file'],
+        timeStart: json['start_timestamp'],
+        timeMeetUp: meetupTimestamp,
+        userParticipating: participating,
+        participationStatus: participationStatus,
+        isApproved: json['is_approved']);
   }
 }
 
@@ -846,7 +1019,7 @@ class RaceScores {
   final String riderUsername;
   final int place;
   final double time;
-  
+
   RaceScores(
   {
     required this.id,
@@ -859,13 +1032,13 @@ class RaceScores {
 
   factory RaceScores.fromJson(Map<String, dynamic> json) {
     return RaceScores(
-        id: json['id'], 
-        riderName: json['rider_name'], 
-        riderSurname: json['rider_surname'], 
-        riderUsername: json['rider_username'], 
-        place: json['place_assigned_overall'], 
+        id: json['id'],
+        riderName: json['rider_name'],
+        riderSurname: json['rider_surname'],
+        riderUsername: json['rider_username'],
+        place: json['place_assigned_overall'],
         time: json['time_seconds']
     );
   }
-  
+
 }

@@ -28,6 +28,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   String startTimestamp = '2000-01-01T00:00:00';
   String endTimestamp = '2000-01-01T00:00:00';
   String gpxMapLink = '';
+  bool isApproved = false;
   Gpx gpxMap = Gpx();
   List<LatLng> points = [];
   late List<Wpt> pointsWpt;
@@ -65,7 +66,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
       setState(() {
         raceName = raceDetails['name'];
-        if (raceDetails['requirements'] != null){
+        if (raceDetails['requirements'] != null) {
           requirements = raceDetails['requirements'];
         }
         status = raceDetails['status'];
@@ -73,14 +74,15 @@ class _RaceDetailsState extends State<RaceDetails> {
         entryFeeGr = raceDetails['entry_fee_gr'];
         raceDescription = raceDetails['description'];
         gpxMapLink = raceDetails['checkpoints_gpx_file'];
-        if(gpxMapLink.contains("/")) {
+        if (gpxMapLink.contains("/")) {
           fetchGpxMap();
         }
-        if (raceDetails['meetup_timestamp'] != null){
+        if (raceDetails['meetup_timestamp'] != null) {
           meetupTimestamp = raceDetails['meetup_timestamp'];
         }
         startTimestamp = raceDetails['start_timestamp'];
         endTimestamp = raceDetails['end_timestamp'];
+        isApproved = raceDetails['is_approved'];
         isParticipating = userParticipating;
         final sponsorBannersJson = raceDetails['sponsor_banners_uuids_json'];
         if (sponsorBannersJson != null) {
@@ -105,11 +107,7 @@ class _RaceDetailsState extends State<RaceDetails> {
         gpxMap = GpxReader().fromString(utf8.decode(response.bodyBytes));
         pointsWpt = gpxMap.trks.first.trksegs.first.trkpts;
         points = gpxMap.trks.first.trksegs.first.trkpts
-            .where((element) =>
-        element.lat != null &&
-            element.lon != null &&
-            element.lat!.isFinite &&
-            element.lon!.isFinite)
+            .where((element) => element.lat != null && element.lon != null && element.lat!.isFinite && element.lon!.isFinite)
             .map((e) => LatLng(e.lat!, e.lon!))
             .toList();
         fitMap();
@@ -127,10 +125,8 @@ class _RaceDetailsState extends State<RaceDetails> {
 
     if (response.statusCode == 200) {
       final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
-      final List<Map<String, dynamic>> bikesData = bikeList
-          .where((bike) => bike['is_retired'] == false)
-          .map((bike) => {'id': bike['id'], 'name': bike['name'].toString()})
-          .toList();
+      final List<Map<String, dynamic>> bikesData =
+          bikeList.where((bike) => bike['is_retired'] == false).map((bike) => {'id': bike['id'], 'name': bike['name'].toString()}).toList();
       setState(() {
         bikes = bikesData;
         if (bikes.isNotEmpty) {
@@ -176,13 +172,13 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   TileLayer get openStreetMapTileLayer => TileLayer(
-    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-    // Use the recommended flutter_map_cancellable_tile_provider package to
-    // support the cancellation of loading tiles.
-    tileProvider: CancellableNetworkTileProvider(),
-    tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
-  );
+        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+        // Use the recommended flutter_map_cancellable_tile_provider package to
+        // support the cancellation of loading tiles.
+        tileProvider: CancellableNetworkTileProvider(),
+        tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +202,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                         initialCenter: const LatLng(52.23202828872916, 21.006132649819673), //Warsaw,
                         initialZoom: 13,
                         interactionOptions:
-                        InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
+                            InteractionOptions(flags: gpxMapLink.contains("/") ? InteractiveFlag.all : InteractiveFlag.none)),
                     children: [
                       openStreetMapTileLayer,
                       PolylineLayer(
@@ -223,6 +219,53 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
+              StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+                  late String msg;
+                  late Color color;
+
+                  switch (status) {
+                    case "in_progress":
+                      msg = "W trakcie";
+                      color = Colors.greenAccent.withOpacity(0.5);
+                      break;
+                    case "cancelled":
+                      msg = "Odwołany";
+                      color = Colors.redAccent.withOpacity(0.5);
+                      break;
+                    case "ended":
+                      if (isApproved) {
+                        msg = "Zakończony";
+                        color = Colors.grey.withOpacity(0.5);
+                      } else {
+                        msg = "Oczekuje na zatwierdzenie wyników";
+                        color = Colors.amber.withOpacity(0.5);
+                      }
+                      break;
+                  }
+
+                  if (['in_progress', 'ended', 'cancelled'].contains(status)) {
+                    return Card(
+                      color: color,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Text(
+                              msg,
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    return SizedBox();
+                  }
+                },
+              ),
+
+              const SizedBox(height: 5.0),
               Card(
                 child: ListTile(
                   title: Text(
@@ -230,7 +273,8 @@ class _RaceDetailsState extends State<RaceDetails> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   subtitle: meetupTimestamp != 'null'
-                      ? Text('Zbiórka: ${formatDateString(meetupTimestamp)}\nCzas trwania: ${formatDateString(startTimestamp)}-${formatDateStringToHours(endTimestamp)}')
+                      ? Text(
+                          'Zbiórka: ${formatDateString(meetupTimestamp)}\nCzas trwania: ${formatDateString(startTimestamp)}-${formatDateStringToHours(endTimestamp)}')
                       : Text('Czas trwania: ${formatDateString(startTimestamp)}-${formatDateStringToHours(endTimestamp)}'),
                 ),
               ),
@@ -262,7 +306,7 @@ class _RaceDetailsState extends State<RaceDetails> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Ilość okrążeń: ${numberOfLaps.toString()}',
+                              'Liczba okrążeń: ${numberOfLaps.toString()}',
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ],
@@ -347,23 +391,23 @@ class _RaceDetailsState extends State<RaceDetails> {
           ),
         ),
       ),
-      floatingActionButton: status == 'ended' || status == 'cancelled'
+      floatingActionButton: status != "pending"
           ? null
           : isParticipating
-          ? FloatingActionButton.extended(
-            onPressed: () {
-              withdrawFromRace();
-            },
-            label: const Text('Wycofaj udział'),
-            icon: const Icon(Icons.cancel),
-          )
-          : FloatingActionButton.extended(
-            onPressed: () {
-              showAddTextDialog(context);
-            },
-            label: const Text('Weź udział w wyścigu!'),
-            icon: const Icon(Icons.add),
-      ),
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    withdrawFromRace();
+                  },
+                  label: const Text('Wycofaj udział'),
+                  icon: const Icon(Icons.cancel),
+                )
+              : FloatingActionButton.extended(
+                  onPressed: () {
+                    showAddTextDialog(context);
+                  },
+                  label: const Text('Weź udział w wyścigu!'),
+                  icon: const Icon(Icons.add),
+                ),
     );
   }
 
@@ -464,7 +508,8 @@ class _RaceDetailsState extends State<RaceDetails> {
   void fitMap() {
     mapController.fitCamera(
       CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
+          bounds:
+              LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
           padding: const EdgeInsets.all(32)),
     );
   }
