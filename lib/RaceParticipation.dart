@@ -811,21 +811,6 @@ class _RaceParticipationState extends State<RaceParticipation> {
         shrinkWrap: true,
         itemCount: scoreRows.length,
         itemBuilder: (context, index) {
-          final places = [];
-          var prevPlace = 0;
-          double prevTime = 0;
-          for (var i = 1; i < scoreRows.length + 1; i++) {
-            late int nextPlace;
-            if (scoreRows[i-1].time == prevTime) {
-              nextPlace = prevPlace;
-            } else {
-              nextPlace = i;
-            }
-            places.add(nextPlace);
-            prevPlace = nextPlace;
-            prevTime = scoreRows[i-1].time;
-          }
-
           return Column(
             children: [
               Row(
@@ -837,7 +822,7 @@ class _RaceParticipationState extends State<RaceParticipation> {
                         right: 16.0
                     ),
                     child: Text(
-                      "${places[index]}",
+                      "${scoreRows[index].place}",
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
