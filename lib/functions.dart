@@ -1,6 +1,13 @@
 import 'package:intl/intl.dart';
 
+"""
+This file contains functions shared between different components of the page
+"""
+
 String formatDateString(String dateString) {
+  """
+  Formats date to a format used by the app
+  """
   if (dateString == 'null') {
     return  'null';
   }
@@ -10,6 +17,9 @@ String formatDateString(String dateString) {
 }
 
 String formatDateStringToHours(String dateString) {
+  """
+  Formats date to be shown using hours. Used by the app
+  """
   if (dateString == 'null') {
     return  'null';
   }
@@ -19,6 +29,9 @@ String formatDateStringToHours(String dateString) {
 }
 
 String formatDateStringDay(String dateString) {
+  """
+  Formats date to be shown using days. Used by the app
+  """
   if (dateString == 'null') {
     return  'null';
   }
@@ -28,6 +41,9 @@ String formatDateStringDay(String dateString) {
 }
 
 bool isToday(String dateString) {
+  """
+  Checks if the given day is the current day. Used by the app
+  """
   DateTime today = DateTime.now();
   DateTime raceDate = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(dateString, true).toLocal();
   return today.year == raceDate.year &&

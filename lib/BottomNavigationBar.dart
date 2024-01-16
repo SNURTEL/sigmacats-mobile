@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 class BottomNavigationBarWidget extends StatelessWidget {
+  """
+  This class contains navigation bar placed on the bottom of the screen.
+  It is used for switching between pages of the application.
+  """
+
   final int currentIndex;
   final Function(int) onTap;
 
@@ -12,6 +17,9 @@ class BottomNavigationBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the widget
+    """
     return BottomNavigationBar(
       items: <BottomNavigationBarItem>[
         BottomNavigationBarItem(

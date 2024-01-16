@@ -8,6 +8,9 @@ import 'package:move_to_background/move_to_background.dart';
 import 'settings.dart' as settings;
 
 class RaceList extends StatefulWidget {
+  """
+  This class is used to create states on a page
+  """
   final String accessToken;
 
   const RaceList({Key? key, required this.accessToken}) : super(key: key);
@@ -17,6 +20,9 @@ class RaceList extends StatefulWidget {
 }
 
 class _RaceListState extends State<RaceList> {
+  """
+  This class defines states of a page for displaying available races
+  """
   List<Race> itemList = [];
   int currentIndex = 0;
 
@@ -27,6 +33,9 @@ class _RaceListState extends State<RaceList> {
   }
 
   Future<void> fetchRaceList() async {
+    """
+    Fetches races to be displayed to the app user
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -44,6 +53,9 @@ class _RaceListState extends State<RaceList> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the race list page
+    """
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
@@ -181,6 +193,9 @@ class _RaceListState extends State<RaceList> {
 }
 
 class Race {
+  """
+  Defines a race class, used for displaying races in the app
+  """
   final int id;
   final String name;
   final String status;
@@ -199,6 +214,9 @@ class Race {
       required this.isApproved});
 
   factory Race.fromJson(Map<String, dynamic> json) {
+    """
+    Creates a race class object from JSON
+    """
     return Race(
       id: json['id'],
       name: json['name'],

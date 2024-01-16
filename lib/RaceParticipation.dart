@@ -15,6 +15,9 @@ import 'package:move_to_background/move_to_background.dart';
 import 'settings.dart' as settings;
 
 class RaceParticipation extends StatefulWidget {
+  """
+  This class is used to create states on a page
+  """
   final String accessToken;
 
   const RaceParticipation({Key? key, required this.accessToken}) : super(key: key);
@@ -24,6 +27,9 @@ class RaceParticipation extends StatefulWidget {
 }
 
 class _RaceParticipationState extends State<RaceParticipation> {
+  """
+  This class defines states of a page for participating in a race by the user
+  """
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   int currentIndex = 2;
   List<Race> itemList = [];
@@ -51,6 +57,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> reloadRaces() async {
+  """
+  Reloads races displayed to the user
+  """
     fetchRaceList().then((value) {
       for (Race race in itemList) {
         if (race.userParticipating && isToday(race.timeStart)) {
@@ -73,6 +82,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   void fitMap() {
+  """
+  Fits map to the screen
+  """
     mapController.fitCamera(
       CameraFit.bounds(
           bounds:
@@ -82,6 +94,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<List<Race>> fetchRaceList() async {
+    """
+    Fetches list of races to be displayed to the user
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -99,6 +114,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> fetchRaceDetails(int id) async {
+    """
+    Fetches details of a given race
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/$id'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -116,6 +134,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> fetchGpxMap() async {
+    """
+    Fetches gpx file with map of a race
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
@@ -136,6 +157,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> fetchRaceScores(int raceId) async {
+    """
+    Fetches scores of a race for a given race
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/$raceId/participation/all'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -153,6 +177,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> fetchCurrentUser() async {
+    """
+    Fetches current user of the app
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -169,6 +196,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Color getColor(int index) {
+    """
+    Returns colors for a given place
+    """
     if (index == 0) {
       return Colors.amber;
     }
@@ -184,6 +214,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Color getCardColor(int index) {
+    """
+    Returns colors of the card
+    """
     if (scoreRows[index].riderName == currentUser.name && scoreRows[index].riderSurname == currentUser.surname) {
       return Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5);
     } else {
@@ -192,6 +225,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   String convertRuntime(double seconds) {
+    """
+    Converts running time of the race to be displayed in HH MM SS format
+    """
     int hours = (seconds / 3600).floor();
     int minutes = ((seconds - hours * 3600) / 60).floor();
     int newSeconds = (seconds - hours * 3600 - minutes * 60).floor();
@@ -200,6 +236,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the race participation widget
+    """
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
@@ -257,12 +296,18 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Future<void> _handleRefresh() async {
+    """
+    Handles refreshes of a page
+    """
     await reloadRaces();
     await fetchCurrentUser();
     setState(() {});
   }
 
   Widget NoRaceContent() {
+    """
+    Widget used for displaying next planned races of a current user
+    """
     int nextRaceIndex = findNextRaceIndex();
 
     return Container(
@@ -407,6 +452,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   int findNextRaceIndex() {
+    """
+    Finds Id of the next closest race that a user has joined
+    """
     DateTime today = DateTime.now();
     int closestIndex = -1;
     DateTime closestDate = today;
@@ -423,6 +471,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget buildTodayRaceWidget(Race race) {
+    """
+    Returns widget of a today's race of a given user
+    """
     if (race.status == 'pending') {
       return PendingRaceContent(race);
     } else if (race.status == 'in_progress') {
@@ -437,6 +488,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget PendingRaceContent(Race race) {
+    """
+    Widget for displaying pending race for a given user
+    """
     DateTime startTime = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(race.timeStart, true).toLocal();
 
     return Column(
@@ -596,6 +650,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget InProgressRaceContent(Race race) {
+    """
+    Widget used for displaying the currently occuring race of a given user
+    """
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -734,6 +791,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget FinishedRaceContent(Race race) {
+    """
+    Widget used for displaying information about finished race by a given user
+    """
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -796,6 +856,9 @@ class _RaceParticipationState extends State<RaceParticipation> {
   }
 
   Widget EndedRaceContent(Race race) {
+    """
+    Widget used for displaying information about ended race of a given user
+    """
     return SizedBox(
       height: 1000,
       child: ListView.builder(
@@ -883,12 +946,18 @@ class _RaceParticipationState extends State<RaceParticipation> {
 }
 
 class CountdownTimer extends StatelessWidget {
+  """
+  Class used for building a countdown timer to a nearest race
+  """
   final DateTime startTime;
 
   const CountdownTimer({super.key, required this.startTime});
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds countdown timer to a nearest race
+    """
     return StreamBuilder<int>(
       stream: countdownStream(),
       builder: (context, snapshot) {
@@ -935,6 +1004,9 @@ class CountdownTimer extends StatelessWidget {
   }
 
   Stream<int> countdownStream() async* {
+    """
+    Provides data for a countdown timer
+    """
     while (true) {
       DateTime currentTime = DateTime.now();
       int remainingSeconds = startTime.difference(currentTime).inSeconds;
@@ -947,6 +1019,9 @@ class CountdownTimer extends StatelessWidget {
 }
 
 class CountdownCard extends StatelessWidget {
+  """
+  Class for creating a countdown card widget
+  """
   final String label;
   final String value;
   final double left;
@@ -956,6 +1031,9 @@ class CountdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Build the countdown card widget
+    """
     return Expanded(
       child: Column(
         children: [
@@ -976,6 +1054,9 @@ class CountdownCard extends StatelessWidget {
 }
 
 class Race {
+  """
+  Defines a race class, used for displaying races in the app
+  """
   final int id;
   final String name;
   final String status;
@@ -998,6 +1079,9 @@ class Race {
       required this.isApproved});
 
   factory Race.fromJson(Map<String, dynamic> json) {
+    """
+    Creates a race class object from JSON
+    """
     bool participating = false;
     String meetupTimestamp = 'null';
     final String? participationStatus = json['participation_status'];
@@ -1022,6 +1106,9 @@ class Race {
 }
 
 class RaceScores {
+  """
+  Defines a race scores class, used for displaying race results in the app
+  """
   final int id;
   final String riderName;
   final String riderSurname;
@@ -1040,6 +1127,9 @@ class RaceScores {
   });
 
   factory RaceScores.fromJson(Map<String, dynamic> json) {
+    """
+    Creates a race scores object from JSON
+    """
     return RaceScores(
         id: json['id'],
         riderName: json['rider_name'],

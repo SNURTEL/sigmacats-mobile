@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'settings.dart' as settings;
 
 class ForgotPasswordPage extends StatefulWidget {
+  """
+  This class is used to create states on a page
+  """
   const ForgotPasswordPage({Key? key}) : super(key: key);
 
   @override
@@ -10,10 +13,16 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  """
+  This class defines states of a page for resetting password
+  """
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
 
   Future<void> _sendEmail(BuildContext context) async {
+    """
+    Attempts to send password reset email and returns the response
+    """
     if (_formKey.currentState?.validate() ?? false) {
       String email = _emailController.text;
       final apiUrl = Uri.parse('${settings.apiBaseUrl}/api/auth/forgot-password');
@@ -35,6 +44,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the reset password page
+    """
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resetowanie hasła'),
@@ -93,6 +105,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   void showNotification(BuildContext context, String message) {
+    """
+    Shows notifications
+    """
     final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),

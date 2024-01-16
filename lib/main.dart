@@ -17,6 +17,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'settings.dart' as settings;
 
 void main() async {
+  """
+  Runs the application
+  """
   await dotenv.load(fileName: ".env");
   settings.apiBaseUrl = dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2";
   settings.uploadBaseUrl = '${dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2"}:${dotenv.env["FLUTTER_FASTAPI_UPLOAD_PORT"] ?? 5050}${dotenv.env["FLUTTER_FASTAPI_UPLOAD_URL_PREFIX"] ?? "/api/race/"}' ;
@@ -25,6 +28,9 @@ void main() async {
 }
 
 class App extends StatefulWidget {
+  """
+  App class used to build the application, includes states
+  """
   const App({Key? key}) : super(key: key);
 
   @override
@@ -32,6 +38,9 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  """
+  Class used for setting the initial state of the application
+  """
   @override
   void initState() {
     super.initState();
@@ -41,6 +50,9 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the whole application
+    """
     return MaterialApp(
       theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),

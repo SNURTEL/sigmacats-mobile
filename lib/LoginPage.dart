@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'settings.dart' as settings;
 
 class LoginPage extends StatefulWidget {
+  """
+  This class is used to create states on a page
+  """
   const LoginPage({Key? key}) : super(key: key);
 
   @override
@@ -11,12 +14,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  """
+  This class defines state of a page for logging into the application
+  """
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
 
   Future<void> _handleLogin(BuildContext context) async {
+    """
+    Handles logging in, returns response in form of a message
+    """
     if (_formKey.currentState?.validate() ?? false) {
       String username = _usernameController.text;
       String password = _passwordController.text;
@@ -43,6 +52,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the logging in page
+    """
     return Scaffold(
       appBar: AppBar(
         title: const Text('Logowanie'),
@@ -130,6 +142,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void showNotification(BuildContext context, String message) {
+    """
+    Shows message regarding the success of logging into the app
+    """
     final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),

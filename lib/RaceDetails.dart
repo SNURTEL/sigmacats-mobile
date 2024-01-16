@@ -8,7 +8,15 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:latlong2/latlong.dart';
 import 'settings.dart' as settings;
 
+"""
+This file contains classes and functions used for displaying race details in the application
+"""
+
+
 class RaceDetails extends StatefulWidget {
+  """
+  This class is used to create states on a page
+  """
   final int id;
   final String accessToken;
 
@@ -19,6 +27,9 @@ class RaceDetails extends StatefulWidget {
 }
 
 class _RaceDetailsState extends State<RaceDetails> {
+  """
+  This class defines states of a page for resetting password
+  """
   String selectedValue = '';
   String raceName = '';
   String status = '';
@@ -54,6 +65,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> fetchRaceDetails() async {
+    """
+    Fetches race details from the server to be displayed to the user
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -98,6 +112,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> fetchGpxMap() async {
+    """
+    Fetches gpx map of the race from the server to be displayed to the user
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
@@ -118,6 +135,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
+    """
+    Fetches bikes assigned to a user from the server
+    """
     final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -140,6 +160,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> joinRace(int bikeId) async {
+    """
+    Attempts to register user to a race, shows appropriate notification regarding success of the operation
+    """
     final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -156,6 +179,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Future<void> withdrawFromRace() async {
+    """
+    Withdraws user from a race, shows appropriate notification regarding success of the operation
+    """
     final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -182,6 +208,9 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   @override
   Widget build(BuildContext context) {
+    """
+    Builds the race details screen
+    """
     return Scaffold(
       appBar: AppBar(
         title: Text(raceName),
@@ -412,6 +441,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   Widget buildSponsorBanners() {
+    """
+    Builds a widget for sponsor banners
+    """
     return Column(
       children: sponsorBannersUrl.map((bannerUrl) {
         return SizedBox(
@@ -433,6 +465,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   void showAddTextDialog(BuildContext context) async {
+    """
+    Creates dropdown menu for selecting a bike for a race
+    """
     fetchBikeNames();
     showDialog(
       context: context,
@@ -492,11 +527,17 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   int getSelectedBikeId(String bikeName) {
+    """
+    Returns id of a selected bike
+    """
     final selectedBike = bikes.firstWhere((bike) => bike['name'] == bikeName, orElse: () => {'id': -1});
     return selectedBike['id'];
   }
 
   void showNotification(BuildContext context, String message) {
+    """
+    Shows notifications
+    """
     final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),
@@ -506,6 +547,9 @@ class _RaceDetailsState extends State<RaceDetails> {
   }
 
   void fitMap() {
+    """
+    Fits map to the screen
+    """
     mapController.fitCamera(
       CameraFit.bounds(
           bounds:
