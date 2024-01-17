@@ -7,10 +7,8 @@ import 'package:move_to_background/move_to_background.dart';
 import 'settings.dart' as settings;
 
 class UserProfile extends StatefulWidget {
-  """
-  This class is used to create states on a page
-  """
-  final String accessToken;
+  ///  This class is used to create states on a page
+    final String accessToken;
 
   const UserProfile({super.key, required this.accessToken});
 
@@ -19,10 +17,8 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  """
-  This class defines states of a page for displaying user profile
-  """
-  int currentIndex = 3;
+  ///  This class defines states of a page for displaying user profile
+    int currentIndex = 3;
   int userId = 0;
   String username = '';
   String name = '';
@@ -41,10 +37,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> fetchUserInfo() async {
-    """
-    Fetches user data from server
-    """
-    final response = await http.get(
+    ///    Fetches user data from server
+        final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -74,10 +68,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> fetchBikesDetails() async {
-    """
-    Fetches bikes of a user from server
-    """
-    final response = await http.get(
+    ///    Fetches bikes of a user from server
+        final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -111,10 +103,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> deleteBike(int bikeId) async {
-    """
-    Allows for bike deletion from server
-    """
-    Map data = {"is_retired": "true"};
+    ///    Allows for bike deletion from server
+        Map data = {"is_retired": "true"};
     var body = json.encode(data);
     final response = await http.patch(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/$bikeId'),
@@ -137,10 +127,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> editBike(final bikeInfo) async {
-    """
-    Allows for editing of user's bike
-    """
-    Map data = {
+    ///    Allows for editing of user's bike
+        Map data = {
       "name": bikeInfo['name'],
       "type": bikeInfo['type'],
       "brand": bikeInfo['brand'],
@@ -168,10 +156,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> addBike(final bikeInfo) async {
-    """
-    Allows for adding a bike to user account
-    """
-    Map data = {
+    ///    Allows for adding a bike to user account
+        Map data = {
       "name": bikeInfo['name'],
       "type": bikeInfo['type'],
       "brand": bikeInfo['brand'],
@@ -200,10 +186,8 @@ class _UserProfileState extends State<UserProfile> {
 
   @override
   Widget build(BuildContext context) {
-    """
-    Builds the user profile widget
-    """
-    return PopScope(
+    ///    Builds the user profile widget
+        return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
         if (didPop) {
@@ -365,10 +349,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   List<ExpansionPanel> buildBikeExpansionPanels() {
-    """
-    Builds expansion panels for choosing bike type
-    """
-    return bikes.asMap().entries.toList().map((entry) {
+    ///    Builds expansion panels for choosing bike type
+        return bikes.asMap().entries.toList().map((entry) {
       final cardId = entry.key;
       final bike = entry.value;
       Map<String, String> bikeTypesMap = {
@@ -443,10 +425,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showDeleteBikeDialog(BuildContext context, int bikeId) async {
-    """
-    Method for showing dialog box for deleting a bike
-    """
-    showDialog(
+    ///    Method for showing dialog box for deleting a bike
+        showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -485,10 +465,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showEditBikeDialog(BuildContext context, final bike) async {
-    """
-    Method for showing dialog box for editing bike details
-    """
-    TextEditingController bikeName = TextEditingController(text: bike['name']);
+    ///    Method for showing dialog box for editing bike details
+        TextEditingController bikeName = TextEditingController(text: bike['name']);
     TextEditingController bikeBrand =
         TextEditingController(text: bike['brand']);
     TextEditingController bikeModel =
@@ -618,10 +596,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showAddBikeDialog(BuildContext context) async {
-    """
-    Method for showing dialog box for adding a new bike
-    """
-    TextEditingController bikeName = TextEditingController();
+    ///    Method for showing dialog box for adding a new bike
+        TextEditingController bikeName = TextEditingController();
     TextEditingController bikeBrand = TextEditingController();
     TextEditingController bikeModel = TextEditingController();
     List<Map<String, String>> bikeTypes = [
@@ -750,10 +726,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showNotification(BuildContext context, String message) {
-    """
-    Shows notifications
-    """
-    final snackBar = SnackBar(
+    ///    Shows notifications
+        final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),
     );

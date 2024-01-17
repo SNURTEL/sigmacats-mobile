@@ -5,20 +5,16 @@ import 'package:intl/intl.dart';
 import 'settings.dart' as settings;
 
 class RegistrationPage extends StatefulWidget {
-  """
-  This class is used to create states on a page
-  """
-  const RegistrationPage({Key? key}) : super(key: key);
+  ///  This class is used to create states on a page
+    const RegistrationPage({Key? key}) : super(key: key);
 
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
 }
 
 DateTime clipDay(DateTime d) {
-  """
-  Returns the day of the given date
-  """
-  if (!DateUtils.isSameDay(d, DateTime.now())) {
+  ///  Returns the day of the given date
+    if (!DateUtils.isSameDay(d, DateTime.now())) {
     return DateTime.now().copyWith(
         hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0);
   } else {
@@ -27,10 +23,8 @@ DateTime clipDay(DateTime d) {
 }
 
 class _RegistrationPageState extends State<RegistrationPage> {
-  """
-  This class defines states of a page used for registration of new users
-  """
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  ///  This class defines states of a page used for registration of new users
+    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _repeatPasswordController = TextEditingController();
@@ -48,10 +42,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _showRepeatPassword = false;
 
   Future<void> registerUser(BuildContext context) async {
-    """
-    Attempts to register user using provided data, returns message regarding the success of the operation
-    """
-    Map data = {};
+    ///    Attempts to register user using provided data, returns message regarding the success of the operation
+        Map data = {};
     if (selectedGenderOption == null) {
       data = {
         "email": _emailController.text,
@@ -93,10 +85,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
-    """
-    Builds the registration widget
-    """
-    return Scaffold(
+    ///    Builds the registration widget
+        return Scaffold(
       appBar: AppBar(
         title: const Text('Rejestracja'),
       ),
@@ -333,10 +323,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Future<DateTime?> _selectDate(BuildContext context,
       {DateTime? initialDate}) async {
-    """
-    Method used for birth date selection (showing only possible dates)
-    """
-    DateTime selectedDate = initialDate ?? DateTime.now();
+    ///    Method used for birth date selection (showing only possible dates)
+        DateTime selectedDate = initialDate ?? DateTime.now();
     final DateTime? pickedDate = await showDatePicker(
         firstDate: DateTime.now().subtract(const Duration(days: 36500)),
         lastDate: DateTime.now(),
@@ -356,10 +344,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   }
 
   void showNotification(BuildContext context, String message) {
-    """
-    Shows notifications
-    """
-    final snackBar = SnackBar(
+    ///    Shows notifications
+        final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),
     );

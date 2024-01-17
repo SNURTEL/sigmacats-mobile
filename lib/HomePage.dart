@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  """
-  Class builds the homepage of the app
-  """
-  const HomePage({super.key});
+  ///  Class builds the homepage of the app
+    const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    """
-    Build the homepage
-    """
-    return Scaffold(
+    ///    Build the homepage
+        return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

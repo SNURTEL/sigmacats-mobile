@@ -15,10 +15,8 @@ import 'settings.dart' as settings;
 var uuid = Uuid();
 
 class RaceTrackingPage extends StatefulWidget {
-  """
-  This class is used to create states on a page
-  """
-  final String accessToken;
+  ///  This class is used to create states on a page
+    final String accessToken;
   final int raceId;
 
   const RaceTrackingPage(this.raceId, {Key? key, required this.accessToken}) : super(key: key);
@@ -28,10 +26,8 @@ class RaceTrackingPage extends StatefulWidget {
 }
 
 class _RaceTrackingPageState extends State<RaceTrackingPage> {
-  """
-  This class defines states of a page for race tracking page
-  """
-  int numSamples = 0;
+  ///  This class defines states of a page for race tracking page
+    int numSamples = 0;
   bool isTracking = false;
   bool isFollowing = false;
   bool isFitTrack = true;
@@ -132,10 +128,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   void setupTracking() {
-    """
-    Sets up tracking for a race
-    """
-    bg.BackgroundGeolocation.onLocation((bg.Location location) {
+    ///    Sets up tracking for a race
+        bg.BackgroundGeolocation.onLocation((bg.Location location) {
       print('[location] - $location');
       setState(() {
         this.location = location;
@@ -192,10 +186,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Future<void> fetchMapGpx() async {
-    """
-    Fetches gpx file with map of a race
-    """
-    final detailsResponse = await http.get(
+    ///    Fetches gpx file with map of a race
+        final detailsResponse = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.raceId}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -229,10 +221,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
 
   @override
   Widget build(BuildContext context) {
-    """
-    Build the race tracking widget
-    """
-    return PopScope(
+    ///    Build the race tracking widget
+        return PopScope(
         canPop: !isTracking && !isUploading,
         child: Scaffold(
             appBar: AppBar(
@@ -352,10 +342,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Widget NotTrackingBarContent() {
-    """
-    Widget used before starting the tracking of a rider
-    """
-    return Row(
+    ///    Widget used before starting the tracking of a rider
+        return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton(
@@ -415,10 +403,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Widget TrackingBarContent() {
-    """
-    Widget used for displaying tracking of a route covered by a user
-    """
-    return Row(
+    ///    Widget used for displaying tracking of a route covered by a user
+        return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         OutlinedButton(
@@ -448,10 +434,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   void showNotification(BuildContext context, String message) {
-    """
-    Shows notifications
-    """
-    final snackBar = SnackBar(
+    ///    Shows notifications
+        final snackBar = SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 3),
     );
@@ -460,10 +444,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Widget EndRecordingDialog(BuildContext context) {
-    """
-    Widget used for finishing tracking
-    """
-    return StatefulBuilder(
+    ///    Widget used for finishing tracking
+        return StatefulBuilder(
       builder: (BuildContext context, void Function(void Function()) setState) {
         return PopScope(
           // canPop: !isUploading && !wasUploadSuccess,
@@ -551,10 +533,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Future<int> uploadResultGpx() async {
-    """
-    Uploads a gpx file (a result of tracking) to a server
-    """
-    final fileUuid = uuid.v4();
+    ///    Uploads a gpx file (a result of tracking) to a server
+        final fileUuid = uuid.v4();
     final filename = 'race_${widget.raceId}_ride_${fileUuid}';
 
     final gpx = dumpGpx(locationHistory, locationTimestamps, fileUuid, "This is a test GPX file");
@@ -580,10 +560,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps, [String name = "", String desc = "", DateTime? time]) {
-    """
-    Dumps a gpx file
-    """
-    time = time ?? DateTime.now();
+    ///    Dumps a gpx file
+        time = time ?? DateTime.now();
     final gpx = Gpx();
     gpx.version = '1.1';
     gpx.creator = 'sigmacats rider app';
@@ -603,10 +581,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Future<int> withdrawFromRace() async {
-    """
-    Allows for withdrawal from a race, display the message regarding the success of the operation
-    """
-    final response = await http.post(
+    ///    Allows for withdrawal from a race, display the message regarding the success of the operation
+        final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.raceId}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -621,10 +597,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
 }
 
 extension DarkMode on BuildContext {
-  """
-  Extension to allow dark mode
-  """
-  bool get isDarkMode1 {
+  ///  Extension to allow dark mode
+    bool get isDarkMode1 {
     final brightness = MediaQuery.of(this).platformBrightness;
     return brightness == Brightness.dark;
   }
