@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-import 'CustomColorScheme.dart';
-import 'HomePage.dart';
-import 'LoginPage.dart';
-import 'RaceTrackingPage.dart';
-import 'RegistrationPage.dart';
-import 'RaceList.dart';
-import 'Ranking.dart';
-import 'RaceParticipation.dart';
-import 'UserProfile.dart';
-import 'ForgotPasswordPage.dart';
+import 'theme/Color.dart';
+import 'pages/HomePage.dart';
+import 'pages/LoginPage.dart';
+import 'pages/RaceTrackingPage.dart';
+import 'pages/RegistrationPage.dart';
+import 'pages/RaceListPage.dart';
+import 'pages/RankingPage.dart';
+import 'pages/RaceParticipationPage.dart';
+import 'pages/UserProfilePage.dart';
+import 'pages/ForgotPasswordPage.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'settings.dart' as settings;
+import 'util/settings.dart' as settings;
 
 void main() async {
   ///  Runs the application
-    await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: ".env");
   settings.apiBaseUrl = dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2";
-  settings.uploadBaseUrl = '${dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2"}:${dotenv.env["FLUTTER_FASTAPI_UPLOAD_PORT"] ?? 5050}${dotenv.env["FLUTTER_FASTAPI_UPLOAD_URL_PREFIX"] ?? "/api/race/"}' ;
+  settings.uploadBaseUrl =
+      '${dotenv.env["FLUTTER_FASTAPI_HOST"] ?? "http://10.0.2.2"}:${dotenv.env["FLUTTER_FASTAPI_UPLOAD_PORT"] ?? 5050}${dotenv.env["FLUTTER_FASTAPI_UPLOAD_URL_PREFIX"] ?? "/api/race/"}';
   await initializeDateFormatting('pl_PL', null);
   runApp(const App());
 }
 
 class App extends StatefulWidget {
   ///  App class used to build the application, includes states
-    const App({Key? key}) : super(key: key);
+  const App({Key? key}) : super(key: key);
 
   @override
   _AppState createState() => _AppState();
@@ -35,7 +36,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   ///  Class used for setting the initial state of the application
-    @override
+  @override
   void initState() {
     super.initState();
     bg.BackgroundGeolocation.stop();
@@ -45,7 +46,7 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     ///    Builds the whole application
-        return MaterialApp(
+    return MaterialApp(
       theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

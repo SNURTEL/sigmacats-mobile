@@ -1,14 +1,16 @@
 import 'dart:convert';
-import 'functions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'BottomNavigationBar.dart';
 import 'package:move_to_background/move_to_background.dart';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/notification.dart';
+import 'package:sigmactas_alleycat/components/BottomNavigationBar.dart';
+import 'package:sigmactas_alleycat/util/dates.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
 
 class UserProfile extends StatefulWidget {
-  ///  This class is used to create states on a page
-    final String accessToken;
+  ///  User profile page widget
+  final String accessToken;
 
   const UserProfile({super.key, required this.accessToken});
 
@@ -17,8 +19,8 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  ///  This class defines states of a page for displaying user profile
-    int currentIndex = 3;
+  ///  User profile page state
+  int currentIndex = 3;
   int userId = 0;
   String username = '';
   String name = '';
@@ -38,14 +40,13 @@ class _UserProfileState extends State<UserProfile> {
 
   Future<void> fetchUserInfo() async {
     ///    Fetches user data from server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> userInfo =
-          json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> userInfo = json.decode(utf8.decode(response.bodyBytes));
 
       setState(() {
         userId = userInfo['id'];
@@ -69,23 +70,16 @@ class _UserProfileState extends State<UserProfile> {
 
   Future<void> fetchBikesDetails() async {
     ///    Fetches bikes of a user from server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> bikeList =
-          json.decode(utf8.decode(response.bodyBytes));
+      final List<dynamic> bikeList = json.decode(utf8.decode(response.bodyBytes));
       final List<Map<String, dynamic>> bikesData = bikeList
           .where((bike) => bike['is_retired'] == false)
-          .map((bike) => {
-                'id': bike['id'],
-                'name': bike['name'],
-                'brand': bike['brand'],
-                'model': bike['model'],
-                'type': bike['type']
-              })
+          .map((bike) => {'id': bike['id'], 'name': bike['name'], 'brand': bike['brand'], 'model': bike['model'], 'type': bike['type']})
           .toList();
       final Map<int, bool> initialIsBikeExpanded = {};
       int cardId = 0;
@@ -103,15 +97,12 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> deleteBike(int bikeId) async {
-    ///    Allows for bike deletion from server
-        Map data = {"is_retired": "true"};
+    ///    Make a delete bike request to server and show notification
+    Map data = {"is_retired": "true"};
     var body = json.encode(data);
     final response = await http.patch(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/$bikeId'),
-      headers: {
-        'Authorization': 'Bearer ${widget.accessToken}',
-        "Content-Type": "application/json"
-      },
+      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
       body: body,
     );
 
@@ -121,14 +112,13 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {});
       showNotification(context, 'Udało się usunąć rower!');
     } else {
-      showNotification(
-          context, 'Błąd podczas usuwania roweru ${response.statusCode}');
+      showNotification(context, 'Błąd podczas usuwania roweru ${response.statusCode}');
     }
   }
 
   Future<void> editBike(final bikeInfo) async {
-    ///    Allows for editing of user's bike
-        Map data = {
+    ///    Make a edit bike request to server and show notification
+    Map data = {
       "name": bikeInfo['name'],
       "type": bikeInfo['type'],
       "brand": bikeInfo['brand'],
@@ -137,10 +127,7 @@ class _UserProfileState extends State<UserProfile> {
     var body = json.encode(data);
     final response = await http.patch(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/${bikeInfo['id']}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.accessToken}',
-        "Content-Type": "application/json"
-      },
+      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
       body: body,
     );
 
@@ -150,14 +137,13 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {});
       showNotification(context, 'Udało się edytować rower!');
     } else {
-      showNotification(
-          context, 'Błąd podczas edytowania roweru ${response.statusCode}');
+      showNotification(context, 'Błąd podczas edytowania roweru ${response.statusCode}');
     }
   }
 
   Future<void> addBike(final bikeInfo) async {
-    ///    Allows for adding a bike to user account
-        Map data = {
+    ///    Make a create bike request to server and show notification
+    Map data = {
       "name": bikeInfo['name'],
       "type": bikeInfo['type'],
       "brand": bikeInfo['brand'],
@@ -166,10 +152,7 @@ class _UserProfileState extends State<UserProfile> {
     var body = json.encode(data);
     final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/create'),
-      headers: {
-        'Authorization': 'Bearer ${widget.accessToken}',
-        "Content-Type": "application/json"
-      },
+      headers: {'Authorization': 'Bearer ${widget.accessToken}', "Content-Type": "application/json"},
       body: body,
     );
 
@@ -179,15 +162,14 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {});
       showNotification(context, 'Udało się dodać nowy rower!');
     } else {
-      showNotification(
-          context, 'Błąd podczas dodawania roweru ${response.statusCode}');
+      showNotification(context, 'Błąd podczas dodawania roweru ${response.statusCode}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     ///    Builds the user profile widget
-        return PopScope(
+    return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
         if (didPop) {
@@ -327,16 +309,13 @@ class _UserProfileState extends State<UserProfile> {
             });
             switch (currentIndex) {
               case 0:
-                Navigator.pushReplacementNamed(context, '/race_list',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/race_list', arguments: widget.accessToken);
                 break;
               case 1:
-                Navigator.pushReplacementNamed(context, '/ranking',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
                 break;
               case 2:
-                Navigator.pushReplacementNamed(context, '/race_participation',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
                 break;
               case 3:
                 // UserProfile
@@ -350,14 +329,10 @@ class _UserProfileState extends State<UserProfile> {
 
   List<ExpansionPanel> buildBikeExpansionPanels() {
     ///    Builds expansion panels for choosing bike type
-        return bikes.asMap().entries.toList().map((entry) {
+    return bikes.asMap().entries.toList().map((entry) {
       final cardId = entry.key;
       final bike = entry.value;
-      Map<String, String> bikeTypesMap = {
-        'other': 'inny',
-        'road': 'szosa',
-        'fixie': 'ostre koło'
-      };
+      Map<String, String> bikeTypesMap = {'other': 'inny', 'road': 'szosa', 'fixie': 'ostre koło'};
 
       return ExpansionPanel(
         backgroundColor: Colors.transparent,
@@ -425,8 +400,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showDeleteBikeDialog(BuildContext context, int bikeId) async {
-    ///    Method for showing dialog box for deleting a bike
-        showDialog(
+    ///    Method for showing dialog popup for deleting a bike
+    showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -465,12 +440,10 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showEditBikeDialog(BuildContext context, final bike) async {
-    ///    Method for showing dialog box for editing bike details
-        TextEditingController bikeName = TextEditingController(text: bike['name']);
-    TextEditingController bikeBrand =
-        TextEditingController(text: bike['brand']);
-    TextEditingController bikeModel =
-        TextEditingController(text: bike['model']);
+    ///    Method for showing dialog popup for editing bike details
+    TextEditingController bikeName = TextEditingController(text: bike['name']);
+    TextEditingController bikeBrand = TextEditingController(text: bike['brand']);
+    TextEditingController bikeModel = TextEditingController(text: bike['model']);
     List<Map<String, String>> bikeTypes = [
       {'display': 'szosa', 'value': 'road'},
       {'display': 'ostre koło', 'value': 'fixie'},
@@ -596,8 +569,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void showAddBikeDialog(BuildContext context) async {
-    ///    Method for showing dialog box for adding a new bike
-        TextEditingController bikeName = TextEditingController();
+    ///    Method for showing dialog popup for adding a new bike
+    TextEditingController bikeName = TextEditingController();
     TextEditingController bikeBrand = TextEditingController();
     TextEditingController bikeModel = TextEditingController();
     List<Map<String, String>> bikeTypes = [
@@ -723,15 +696,5 @@ class _UserProfileState extends State<UserProfile> {
         );
       },
     );
-  }
-
-  void showNotification(BuildContext context, String message) {
-    ///    Shows notifications
-        final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

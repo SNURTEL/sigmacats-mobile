@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/notification.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
 
 class ForgotPasswordPage extends StatefulWidget {
-  ///  This class is used to create states on a page
-    const ForgotPasswordPage({Key? key}) : super(key: key);
+  ///  Page for resetting account password
+  const ForgotPasswordPage({Key? key}) : super(key: key);
 
   @override
   _ForgotPasswordPageState createState() => _ForgotPasswordPageState();
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  ///  This class defines states of a page for resetting password
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  ///  Forgot password page state
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
 
   Future<void> _sendEmail(BuildContext context) async {
-    ///    Attempts to send password reset email and returns the response
-        if (_formKey.currentState?.validate() ?? false) {
+    ///    Make a reset-password request to backend, which should result in sending an email
+    if (_formKey.currentState?.validate() ?? false) {
       String email = _emailController.text;
       final apiUrl = Uri.parse('${settings.apiBaseUrl}/api/auth/forgot-password');
 
@@ -39,7 +41,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     ///    Builds the reset password page
-        return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Resetowanie hasła'),
       ),
@@ -63,7 +65,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     if (value == null || value.isEmpty) {
                       return "Adres email nie może być pusty.";
                     }
-                    if (!RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                    if (!RegExp(
+                            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
                         .hasMatch(value)) {
                       return "Niepoprawny adres email.";
                     }
@@ -94,15 +97,5 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
       ),
     );
-  }
-
-  void showNotification(BuildContext context, String message) {
-    ///    Shows notifications
-        final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

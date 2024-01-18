@@ -1,19 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'functions.dart';
 import 'package:gpx/gpx.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
-import 'settings.dart' as settings;
 
-///This file contains classes and functions used for displaying race details in the application
+import 'package:sigmactas_alleycat/util/notification.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
+import 'package:sigmactas_alleycat/util/dark_mode.dart';
+import 'package:sigmactas_alleycat/util/dates.dart';
 
 
 class RaceDetails extends StatefulWidget {
-  ///  This class is used to create states on a page
-    final int id;
+  ///  Race details page widget
+  final int id;
   final String accessToken;
 
   const RaceDetails(this.id, {Key? key, required this.accessToken}) : super(key: key);
@@ -24,7 +25,7 @@ class RaceDetails extends StatefulWidget {
 
 class _RaceDetailsState extends State<RaceDetails> {
   ///  This class defines states of a page for resetting password
-    String selectedValue = '';
+  String selectedValue = '';
   String raceName = '';
   String status = '';
   String requirements = 'null';
@@ -54,13 +55,13 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   @override
   void dispose() {
-    mapController.dispose();
     super.dispose();
+    mapController.dispose();
   }
 
   Future<void> fetchRaceDetails() async {
     ///    Fetches race details from the server to be displayed to the user
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -93,9 +94,7 @@ class _RaceDetailsState extends State<RaceDetails> {
         final sponsorBannersJson = raceDetails['sponsor_banners_uuids_json'];
         if (sponsorBannersJson != null) {
           final List<dynamic> sponsorBannersList = json.decode(sponsorBannersJson);
-          sponsorBannersUrl = sponsorBannersList
-              .where((url) => url.toString().contains("/"))
-              .map((url) => url.toString()).toList();
+          sponsorBannersUrl = sponsorBannersList.where((url) => url.toString().contains("/")).map((url) => url.toString()).toList();
         }
       });
     } else {
@@ -105,7 +104,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> fetchGpxMap() async {
     ///    Fetches gpx map of the race from the server to be displayed to the user
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}$gpxMapLink'),
     );
 
@@ -126,7 +125,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<List<Map<String, dynamic>>> fetchBikeNames() async {
     ///    Fetches bikes assigned to a user from the server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/bike/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -149,7 +148,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> joinRace(int bikeId) async {
     ///    Attempts to register user to a race, shows appropriate notification regarding success of the operation
-        final response = await http.post(
+    final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/join?bike_id=$bikeId'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -166,7 +165,7 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Future<void> withdrawFromRace() async {
     ///    Withdraws user from a race, shows appropriate notification regarding success of the operation
-        final response = await http.post(
+    final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.id}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -193,7 +192,7 @@ class _RaceDetailsState extends State<RaceDetails> {
   @override
   Widget build(BuildContext context) {
     ///    Builds the race details screen
-        return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text(raceName),
       ),
@@ -203,6 +202,9 @@ class _RaceDetailsState extends State<RaceDetails> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              ///
+              /// Map
+              ///
               SizedBox(
                 height: 300.0,
                 child: ClipRRect(
@@ -230,6 +232,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
+              ///
+              /// Race status
+              ///
               StatefulBuilder(
                 builder: (BuildContext context, StateSetter setState) {
                   late String msg;
@@ -275,8 +280,10 @@ class _RaceDetailsState extends State<RaceDetails> {
                   }
                 },
               ),
-
               const SizedBox(height: 5.0),
+              ///
+              /// Title and dates
+              ///
               Card(
                 child: ListTile(
                   title: Text(
@@ -290,6 +297,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                 ),
               ),
               const SizedBox(height: 5.0),
+              ///
+              /// Entry fee and number of laps
+              ///
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -327,6 +337,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ],
               ),
+              ///
+              /// Race requirements
+              ///
               if (requirements != 'null')
                 Column(
                   children: [
@@ -353,6 +366,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ],
                 ),
               const SizedBox(height: 5.0),
+              ///
+              /// Desctiption
+              ///
               SizedBox(
                 width: double.infinity,
                 child: Card(
@@ -372,6 +388,9 @@ class _RaceDetailsState extends State<RaceDetails> {
                   ),
                 ),
               ),
+              ///
+              /// Sponsor banners
+              ///
               if (sponsorBannersUrl.isNotEmpty)
                 Column(
                   children: [
@@ -424,29 +443,29 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   Widget buildSponsorBanners() {
     ///    Builds a widget for sponsor banners
-        return Column(
+    return Column(
       children: sponsorBannersUrl.map((bannerUrl) {
         return SizedBox(
           width: double.infinity,
           child: Card(
-          child: ClipRRect(
-            borderRadius: const BorderRadius.all(
-              Radius.circular(16.0),
-            ),
-            child: Image.network(
-              '${settings.apiBaseUrl}$bannerUrl',
-              fit: BoxFit.fitWidth,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(16.0),
+              ),
+              child: Image.network(
+                '${settings.apiBaseUrl}$bannerUrl',
+                fit: BoxFit.fitWidth,
+              ),
             ),
           ),
-        ),
         );
       }).toList(),
     );
   }
 
   void showAddTextDialog(BuildContext context) async {
-    ///    Creates dropdown menu for selecting a bike for a race
-        fetchBikeNames();
+    ///    Creates dropdown menu dialog for selecting a bike for a race
+    fetchBikeNames();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -506,35 +525,17 @@ class _RaceDetailsState extends State<RaceDetails> {
 
   int getSelectedBikeId(String bikeName) {
     ///    Returns id of a selected bike
-        final selectedBike = bikes.firstWhere((bike) => bike['name'] == bikeName, orElse: () => {'id': -1});
+    final selectedBike = bikes.firstWhere((bike) => bike['name'] == bikeName, orElse: () => {'id': -1});
     return selectedBike['id'];
   }
 
-  void showNotification(BuildContext context, String message) {
-    ///    Shows notifications
-        final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
   void fitMap() {
-    ///    Fits map to the screen
-        mapController.fitCamera(
+    ///    Fits entire race track on the map
+    mapController.fitCamera(
       CameraFit.bounds(
           bounds:
               LatLngBounds.fromPoints(pointsWpt.where((e) => e.lat != null && e.lon != null).map((e) => LatLng(e.lat!, e.lon!)).toList()),
           padding: const EdgeInsets.all(32)),
     );
-  }
-}
-
-extension DarkMode on BuildContext {
-  /// is dark mode currently enabled?
-  bool get isDarkMode {
-    final brightness = MediaQuery.of(this).platformBrightness;
-    return brightness == Brightness.dark;
   }
 }

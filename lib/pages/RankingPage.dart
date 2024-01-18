@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'BottomNavigationBar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:move_to_background/move_to_background.dart';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/components/BottomNavigationBar.dart';
+import 'package:sigmactas_alleycat/models/ranking.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
 
 class Ranking extends StatefulWidget {
-  ///  This class is used to create states on a page
-    final String accessToken;
+  ///  League ranking page widget
+  final String accessToken;
 
   const Ranking({Key? key, required this.accessToken}) : super(key: key);
 
@@ -16,8 +18,8 @@ class Ranking extends StatefulWidget {
 }
 
 class _RankingState extends State<Ranking> {
-  ///  This class defines states of a page for ranking
-    int currentIndex = 1;
+  ///  Ranking page state
+  int currentIndex = 1;
   int seasonID = 0;
   List<Classification> classificationsParsed = [];
   List<ScoreRow> scoreRows = [];
@@ -28,7 +30,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchClassifications() async {
     ///    Fetches classifications from a server
-        if (seasonID != 0) {
+    if (seasonID != 0) {
       final response = await http.get(
         Uri.parse('${settings.apiBaseUrl}/api/rider/season/$seasonID/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -55,7 +57,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchCurrentSeason() async {
     ///    Fetches current season from server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/season/current'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -72,7 +74,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchSeasons() async {
     ///    Fetches all seasons from server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/season/all'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -90,7 +92,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchCurrentUser() async {
     ///    Fetches current user from server
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/users/me'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -107,7 +109,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchScores(int classificationId) async {
     ///    Fetches scores for a given classification from server
-        if (classificationId != 0) {
+    if (classificationId != 0) {
       final response = await http.get(
         Uri.parse('${settings.apiBaseUrl}/api/rider/rider_classification_link/$classificationId/classification'),
         headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -133,7 +135,7 @@ class _RankingState extends State<Ranking> {
 
   Future<void> fetchInitialData() async {
     ///    Fetches initial data for a page (data displayed, when a page is first loaded)
-        await fetchCurrentSeason();
+    await fetchCurrentSeason();
     await fetchSeasons();
     setState(() {
       seasonDropdownValue = getSeasonName();
@@ -143,9 +145,9 @@ class _RankingState extends State<Ranking> {
     await fetchScores(getClassificationId('Klasyfikacja generalna'));
   }
 
-  Color getColor(int index) {
-    ///    Returns colors for a given place
-        if (index == 0) {
+  Color getBorderColorForPlace(int index) {
+    ///    Returns card border color for a given place in the race
+    if (index == 0) {
       return Colors.amber;
     } else if (index == 1) {
       return Colors.blueGrey.shade300;
@@ -156,9 +158,9 @@ class _RankingState extends State<Ranking> {
     }
   }
 
-  Color getCardColor(int index) {
-    ///    Returns colors of the card
-        if (scoreRows[index].name == currentUser.name && scoreRows[index].surname == currentUser.surname) {
+  Color getCardColorForPlace(int index) {
+    ///    Returns card background color for a given place in the race
+    if (scoreRows[index].name == currentUser.name && scoreRows[index].surname == currentUser.surname) {
       return Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5);
     } else {
       return Theme.of(context).colorScheme.surface;
@@ -167,7 +169,7 @@ class _RankingState extends State<Ranking> {
 
   int getClassificationId(String? name) {
     ///    Returns id of a classification
-        for (final classification in classificationsParsed) {
+    for (final classification in classificationsParsed) {
       if (classification.name == name) {
         return classification.id;
       }
@@ -177,7 +179,7 @@ class _RankingState extends State<Ranking> {
 
   String getSeasonName() {
     ///    Returns names of the seasons
-        for (final season in seasonsParsed) {
+    for (final season in seasonsParsed) {
       if (season.id == seasonID) {
         return season.name;
       }
@@ -194,7 +196,7 @@ class _RankingState extends State<Ranking> {
   @override
   Widget build(BuildContext context) {
     ///    Builds the ranking widget
-        return PopScope(
+    return PopScope(
         canPop: false,
         onPopInvoked: (bool didPop) {
           if (didPop) {
@@ -259,7 +261,9 @@ class _RankingState extends State<Ranking> {
                 )
               ],
             ),
-            SizedBox(height: 32,),
+            SizedBox(
+              height: 32,
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: scoreRows.length,
@@ -279,10 +283,10 @@ class _RankingState extends State<Ranking> {
                             child: SizedBox(
                               width: double.infinity,
                               child: Card(
-                                color: getCardColor(index),
+                                color: getCardColorForPlace(index),
                                 margin: const EdgeInsets.only(right: 16.0, bottom: 16.0),
                                 shape: RoundedRectangleBorder(
-                                    side: BorderSide(color: getColor(index), width: 3.0), borderRadius: BorderRadius.circular(10.0)),
+                                    side: BorderSide(color: getBorderColorForPlace(index), width: 3.0), borderRadius: BorderRadius.circular(10.0)),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Row(
@@ -352,68 +356,5 @@ class _RankingState extends State<Ranking> {
             },
           ),
         ));
-  }
-}
-
-class Classification {
-  ///  Defines a classification class, used for displaying rankings in the app
-    final int id;
-  final String name;
-  final String description;
-
-  Classification({required this.id, required this.name, required this.description});
-
-  factory Classification.fromJson(Map<String, dynamic> json) {
-    ///    Creates a classification class object from JSON
-        return Classification(id: json['id'], name: json['name'], description: json['description']);
-  }
-}
-
-class Season {
-  ///  Defines a season class, used for displaying rankings in the app
-    final int id;
-  final String name;
-  final String startTimestamp;
-  final String? endTimestamp;
-
-  Season({required this.id, required this.name, required this.startTimestamp, required this.endTimestamp});
-
-  factory Season.fromJson(Map<String, dynamic> json) {
-    ///    Creates a season class object from JSON
-        return Season(
-      id: json['id'],
-      name: json['name'],
-      startTimestamp: json['start_timestamp'],
-      endTimestamp: json['end_timestamp'],
-    );
-  }
-}
-
-class ScoreRow {
-  ///  Defines a score row class, used for displaying rankings in the app
-    final int score;
-  final String name;
-  final String surname;
-  final String username;
-
-  ScoreRow({required this.score, required this.name, required this.surname, required this.username});
-
-  factory ScoreRow.fromJson(Map<String, dynamic> json) {
-    ///    Creates a score row class object from JSON
-        return ScoreRow(score: json['score'], name: json['name'], surname: json['surname'], username: json['username']);
-  }
-}
-
-class User {
-  ///  Defines a user class, used for displaying rankings in the app
-    final String name;
-  final String surname;
-  final String username;
-
-  User({required this.name, required this.surname, required this.username});
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    ///    Creates a user class object from JSON
-        return User(name: json['name'], surname: json['surname'], username: json['username']);
   }
 }

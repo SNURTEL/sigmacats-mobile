@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-  ///  This file defines color schemes (light and dark) for the application
-  
+///  This file defines color schemes (light and dark) for the application
+
 const lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF006494),

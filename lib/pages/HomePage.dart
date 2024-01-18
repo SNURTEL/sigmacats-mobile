@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  ///  Class builds the homepage of the app
-    const HomePage({super.key});
+  ///  Home page widget
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     ///    Build the homepage
-        return Scaffold(
+    return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -27,9 +27,7 @@ class HomePage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 fixedSize: const Size(double.infinity, 50.0),
               ),
-              child: const Text(
-                  'Zaloguj się',
-                  style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
+              child: const Text('Zaloguj się', style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 20.0),
             const Text(
@@ -45,9 +43,7 @@ class HomePage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 fixedSize: const Size(double.infinity, 50.0),
               ),
-              child: const Text(
-                  'Zarejestruj się',
-                  style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
+              child: const Text('Zarejestruj się', style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

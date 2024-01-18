@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
+import 'package:sigmactas_alleycat/util/notification.dart';
 
 class LoginPage extends StatefulWidget {
-  ///  This class is used to create states on a page
-    const LoginPage({Key? key}) : super(key: key);
+  ///  Login page widget
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  ///  This class defines state of a page for logging into the application
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  ///  Login page widget state
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
 
   Future<void> _handleLogin(BuildContext context) async {
     ///    Handles logging in, returns response in form of a message
-        if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState?.validate() ?? false) {
       String username = _usernameController.text;
       String password = _passwordController.text;
       final apiUrl = Uri.parse('${settings.apiBaseUrl}/api/auth/jwt/login');
@@ -46,8 +48,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    ///    Builds the logging in page
-        return Scaffold(
+    ///    Builds the login page
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Logowanie'),
       ),
@@ -65,7 +67,8 @@ class _LoginPageState extends State<LoginPage> {
                     if (value == null || value.isEmpty) {
                       return "Adres email nie może być pusty.";
                     }
-                    if (!RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                    if (!RegExp(
+                            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
                         .hasMatch(value)) {
                       return "Niepoprawny adres email.";
                     }
@@ -131,15 +134,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  void showNotification(BuildContext context, String message) {
-    ///    Shows message regarding the success of logging into the app
-        final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

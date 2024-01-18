@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'RaceDetails.dart';
-import 'functions.dart';
-import 'BottomNavigationBar.dart';
+import 'RaceDetailsPage.dart';
 import 'package:move_to_background/move_to_background.dart';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/dates.dart';
+import 'package:sigmactas_alleycat/components/BottomNavigationBar.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
 
 class RaceList extends StatefulWidget {
   ///  This class is used to create states on a page
-    final String accessToken;
+  final String accessToken;
 
   const RaceList({Key? key, required this.accessToken}) : super(key: key);
 
@@ -19,7 +20,7 @@ class RaceList extends StatefulWidget {
 
 class _RaceListState extends State<RaceList> {
   ///  This class defines states of a page for displaying available races
-    List<Race> itemList = [];
+  List<Race> itemList = [];
   int currentIndex = 0;
 
   @override
@@ -30,7 +31,7 @@ class _RaceListState extends State<RaceList> {
 
   Future<void> fetchRaceList() async {
     ///    Fetches races to be displayed to the app user
-        final response = await http.get(
+    final response = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
@@ -48,7 +49,7 @@ class _RaceListState extends State<RaceList> {
   @override
   Widget build(BuildContext context) {
     ///    Builds the race list page
-        return PopScope(
+    return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
         if (didPop) {
@@ -87,10 +88,7 @@ class _RaceListState extends State<RaceList> {
                         child: ColorFiltered(
                           colorFilter: ColorFilter.mode(
                             (itemList[index].status == 'ended' && itemList[index].isApproved)
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .surface
-                                    .withOpacity(0.62)
+                                ? Theme.of(context).colorScheme.surface.withOpacity(0.62)
                                 : Colors.transparent,
                             BlendMode.srcOver,
                           ),
@@ -106,15 +104,13 @@ class _RaceListState extends State<RaceList> {
                                       topLeft: Radius.circular(16.0),
                                       topRight: Radius.circular(16.0),
                                     ),
-                                    child: itemList[index]
-                                            .eventGraphic
-                                            .contains("/")
+                                    child: itemList[index].eventGraphic.contains("/")
                                         ? Image.network(
                                             '${settings.apiBaseUrl}${itemList[index].eventGraphic}',
                                             fit: BoxFit.fitWidth,
                                           )
                                         : Image.asset(
-                                            'lib/sample_image.png',
+                                            'sample_image.png',
                                             fit: BoxFit.fitWidth,
                                           ),
                                   ),
@@ -122,21 +118,16 @@ class _RaceListState extends State<RaceList> {
                                 ListTile(
                                   contentPadding: const EdgeInsets.all(10.0),
                                   title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         itemList[index].name,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge,
+                                        style: Theme.of(context).textTheme.titleLarge,
                                       ),
                                       const SizedBox(height: 5.0),
                                       Text(
                                         '${formatDateString(itemList[index].timeStart)}-${formatDateStringToHours(itemList[index].timeEnd)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium,
+                                        style: Theme.of(context).textTheme.bodyMedium,
                                       ),
                                     ],
                                   ),
@@ -165,16 +156,13 @@ class _RaceListState extends State<RaceList> {
                 // RaceList
                 break;
               case 1:
-                Navigator.pushReplacementNamed(context, '/ranking',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/ranking', arguments: widget.accessToken);
                 break;
               case 2:
-                Navigator.pushReplacementNamed(context, '/race_participation',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/race_participation', arguments: widget.accessToken);
                 break;
               case 3:
-                Navigator.pushReplacementNamed(context, '/user_profile',
-                    arguments: widget.accessToken);
+                Navigator.pushReplacementNamed(context, '/user_profile', arguments: widget.accessToken);
                 break;
             }
           },
@@ -186,7 +174,7 @@ class _RaceListState extends State<RaceList> {
 
 class Race {
   ///  Defines a race class, used for displaying races in the app
-    final int id;
+  final int id;
   final String name;
   final String status;
   final String eventGraphic;
@@ -205,7 +193,7 @@ class Race {
 
   factory Race.fromJson(Map<String, dynamic> json) {
     ///    Creates a race class object from JSON
-        return Race(
+    return Race(
       id: json['id'],
       name: json['name'],
       status: json['status'],
