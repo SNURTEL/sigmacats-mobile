@@ -1,3 +1,5 @@
+# This file contains pipeline for flutter test
+
 name: Flutter
 
 on:
@@ -21,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-        
+
       - name: Copy .env.sample
         run: cp .env.sample .env
 

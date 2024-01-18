@@ -2,25 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/dates.dart';
+import 'package:sigmactas_alleycat/util/notification.dart';
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
 
 class RegistrationPage extends StatefulWidget {
+  ///  Registration page widget
   const RegistrationPage({Key? key}) : super(key: key);
 
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
 }
 
-DateTime clipDay(DateTime d) {
-  if (!DateUtils.isSameDay(d, DateTime.now())) {
-    return DateTime.now().copyWith(
-        hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0);
-  } else {
-    return d;
-  }
-}
-
 class _RegistrationPageState extends State<RegistrationPage> {
+  ///  Registration page state
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -39,6 +35,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _showRepeatPassword = false;
 
   Future<void> registerUser(BuildContext context) async {
+    ///    Attempts to register user using provided data, shows message regarding the success of the operation
     Map data = {};
     if (selectedGenderOption == null) {
       data = {
@@ -50,8 +47,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         "surname": _surnameController.text,
         "birth_date": DateFormat('yyyy-MM-ddTHH:mm:ss.000Z').format(birthDate.toUtc())
       };
-    }
-    else {
+    } else {
       data = {
         "email": _emailController.text,
         "password": _passwordController.text,
@@ -72,15 +68,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     if (response.statusCode == 201) {
       Navigator.pushReplacementNamed(context, '/');
-      showNotification(context, 'Udało się zarejestrować!');
+      showSnackbarMessage(context, 'Udało się zarejestrować!');
     } else {
-      showNotification(
-          context, 'Błąd podczas rejestracji ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas rejestracji ${response.statusCode}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ///    Builds the registration widget
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rejestracja'),
@@ -99,8 +95,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     if (value == null || value.isEmpty) {
                       return "Imię nie może być puste.";
                     }
-                    if (value.contains(new RegExp(r'[0-9!-/:-@\[-`\{-~]')) ||
-                        value.contains(" ")) {
+                    if (value.contains(new RegExp(r'[0-9!-/:-@\[-`\{-~]')) || value.contains(" ")) {
                       return "Niepoprawne imię.";
                     }
                     return null;
@@ -117,8 +112,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     if (value == null || value.isEmpty) {
                       return "Nazwisko nie może być puste.";
                     }
-                    if (value.contains(new RegExp(r'[0-9!-/:-@\[-`\{-~]')) ||
-                        value.contains(" ")) {
+                    if (value.contains(new RegExp(r'[0-9!-/:-@\[-`\{-~]')) || value.contains(" ")) {
                       return "Niepoprawne nazwisko.";
                     }
                     return null;
@@ -135,8 +129,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     if (value == null || value.isEmpty) {
                       return "Nazwa użytkownika nie może być pusta.";
                     }
-                    if (value.contains(new RegExp(r'[!-/:-@\[-\^`\{-~]')) ||
-                        value.contains(" ")) {
+                    if (value.contains(new RegExp(r'[!-/:-@\[-\^`\{-~]')) || value.contains(" ")) {
                       return "Niepoprawna nazwa użytkownika.";
                     }
                     return null;
@@ -173,23 +166,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 FormField<DateTime>(
                   autovalidateMode: AutovalidateMode.always,
                   validator: (value) {
-                    return value != null &&
-                            !DateUtils.isSameDay(value, DateTime.now()) &&
-                            value.isAfter(DateTime.now())
+                    return value != null && !DateUtils.isSameDay(value, DateTime.now()) && value.isAfter(DateTime.now())
                         ? "Nie można wybrać daty z przyszłości"
                         : null;
                   },
                   builder: (FormFieldState state) {
                     return InkWell(
                       onTap: () async {
-                        var pickedDate =
-                            await _selectDate(context, initialDate: birthDate);
+                        var pickedDate = await selectDate(context, initialDate: birthDate);
                         if (pickedDate != null && pickedDate != birthDate) {
                           setState(() {
-                            birthDate = birthDate.copyWith(
-                                day: pickedDate.day,
-                                month: pickedDate.month,
-                                year: pickedDate.year);
+                            birthDate = birthDate.copyWith(day: pickedDate.day, month: pickedDate.month, year: pickedDate.year);
                           });
                         }
                       },
@@ -199,8 +186,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           border: const OutlineInputBorder(),
                           errorText: state.errorText,
                         ),
-                        child: Text(
-                            "${DateFormat.EEEE("pl_PL").format(birthDate)}, ${DateFormat.MMMMd("pl_PL").format(birthDate)}"),
+                        child: Text("${DateFormat.EEEE("pl_PL").format(birthDate)}, ${DateFormat.MMMMd("pl_PL").format(birthDate)}"),
                       ),
                     );
                   },
@@ -246,9 +232,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     suffixIcon: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: IconButton(
-                        icon: Icon(_showPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off),
+                        icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
                         onPressed: () {
                           setState(() {
                             _showPassword = !_showPassword;
@@ -280,9 +264,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     suffixIcon: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: IconButton(
-                        icon: Icon(_showRepeatPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off),
+                        icon: Icon(_showRepeatPassword ? Icons.visibility : Icons.visibility_off),
                         onPressed: () {
                           setState(() {
                             _showRepeatPassword = !_showRepeatPassword;
@@ -304,8 +286,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                   child: const Text(
                     'Zarejestruj się',
-                    style:
-                        TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -314,35 +295,5 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ),
     );
-  }
-
-  Future<DateTime?> _selectDate(BuildContext context,
-      {DateTime? initialDate}) async {
-    DateTime selectedDate = initialDate ?? DateTime.now();
-    final DateTime? pickedDate = await showDatePicker(
-        firstDate: DateTime.now().subtract(const Duration(days: 36500)),
-        lastDate: DateTime.now(),
-        context: context,
-        initialDate: selectedDate,
-        builder: (BuildContext context, Widget? child) {
-          return MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(alwaysUse24HourFormat: false)
-                .copyWith(
-                  alwaysUse24HourFormat: true,
-                ),
-            child: child!,
-          );
-        });
-    return pickedDate;
-  }
-
-  void showNotification(BuildContext context, String message) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

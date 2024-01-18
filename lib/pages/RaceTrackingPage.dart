@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -9,12 +10,13 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
+import 'package:sigmactas_alleycat/util/dark_mode.dart';
+import 'package:sigmactas_alleycat/util/notification.dart';
 import 'package:uuid/uuid.dart';
-import 'settings.dart' as settings;
-
-var uuid = Uuid();
+import '../util/settings.dart' as settings;
 
 class RaceTrackingPage extends StatefulWidget {
+  ///  Race tracking page widget
   final String accessToken;
   final int raceId;
 
@@ -25,6 +27,10 @@ class RaceTrackingPage extends StatefulWidget {
 }
 
 class _RaceTrackingPageState extends State<RaceTrackingPage> {
+  ///  Race tracking page state
+
+  var uuid = const Uuid();
+
   int numSamples = 0;
   bool isTracking = false;
   bool isFollowing = false;
@@ -44,10 +50,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   TileLayer get openStreetMapTileLayer => TileLayer(
         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-        // Use the recommended flutter_map_cancellable_tile_provider package to
-        // support the cancellation of loading tiles.
         tileProvider: CancellableNetworkTileProvider(),
-        tileBuilder: context.isDarkMode1 ? darkModeTileBuilder : null,
+        tileBuilder: context.isDarkMode ? darkModeTileBuilder : null,
       );
 
   PolylineLayer get trackPolylineLayer => PolylineLayer(
@@ -78,7 +82,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                   rotate: true,
                   child: Icon(
                     Icons.pedal_bike,
-                    color: context.isDarkMode1 ? Colors.white : Colors.black54,
+                    color: context.isDarkMode ? Colors.white : Colors.black54,
                   ))
             ]
           : [])
@@ -94,8 +98,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                         child: Padding(
                           padding: const EdgeInsets.all(6.0),
                           child: Image.asset(
-                            "lib/finish_line_icon.png",
-                            color: context.isDarkMode1 ? Colors.white : Colors.black87,
+                            "finish_line_icon.png",
+                            color: context.isDarkMode ? Colors.white : Colors.black87,
                           ),
                         )))
               ]
@@ -126,8 +130,9 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   void setupTracking() {
+    ///    Sets up the tracking library
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
-      print('[location] - $location');
+      log('[location] - $location');
       setState(() {
         this.location = location;
 
@@ -148,11 +153,11 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     });
 
     bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      print('[motionchange] - $location');
+      log('[motionchange] - $location');
     });
 
     bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
-      print('[providerchange] - $event');
+      log('[providerchange] - $event');
     });
 
     bg.BackgroundGeolocation.ready(bg.Config(
@@ -161,11 +166,10 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
         desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
         enableTimestampMeta: true,
         disableElasticity: true,
-        // set to false in production
-        distanceFilter: 0.1,
-        // set to 0m in production
-        elasticityMultiplier: 1,
-        // set to 0.5 in production
+        // true in debug
+        // distanceFilter: 0.1,  // enable in debug
+        elasticityMultiplier: 0.5,
+        // 1 in debug
         stopOnTerminate: false,
         persistMode: bg.Config.PERSIST_MODE_LOCATION,
         startOnBoot: false,
@@ -176,13 +180,14 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
         reset: true));
 
     bg.BackgroundGeolocation.start().then((bg.State state) {
-      print('[start] success $state');
+      log('[start] success $state');
     });
     bg.BackgroundGeolocation.changePace(true);
     trackingStartedTimestamp = DateTime.now();
   }
 
   Future<void> fetchMapGpx() async {
+    ///    Fetches gpx file with map of a race
     final detailsResponse = await http.get(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.raceId}'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
@@ -217,6 +222,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
 
   @override
   Widget build(BuildContext context) {
+    ///    Build the race tracking widget
     return PopScope(
         canPop: !isTracking && !isUploading,
         child: Scaffold(
@@ -228,33 +234,34 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                 IconButton(
                   icon: Icon(Icons.cancel_outlined),
                   onPressed: () {
-                    showDialog(context: context, builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text("Zrezygnować?"),
-                        icon: Icon(Icons.mood_bad_outlined),
-                        content: Text("Jeśli wycofasz się z wyścigu, powrót nie będzie możliwy!"),
-                        actions: [
-                          TextButton(
-                              onPressed: (){
-                                Navigator.of(context).pop();
-                              },
-                              child: Text("Anuluj")),
-                          ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.error,
-                                foregroundColor: Theme.of(context).colorScheme.onError
-                              ),
-                              onPressed: () async {
-                                final responseCode = await withdrawFromRace();
-                                if (responseCode == 200) {
-                                  Navigator.of(context).pop();
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                              child: Text("Zrezygnuj"))
-                        ],
-                      );
-                    });
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text("Zrezygnować?"),
+                            icon: Icon(Icons.mood_bad_outlined),
+                            content: Text("Jeśli wycofasz się z wyścigu, powrót nie będzie możliwy!"),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text("Anuluj")),
+                              ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.error,
+                                      foregroundColor: Theme.of(context).colorScheme.onError),
+                                  onPressed: () async {
+                                    final responseCode = await withdrawFromRace();
+                                    if (responseCode == 200) {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
+                                  child: Text("Zrezygnuj"))
+                            ],
+                          );
+                        });
                   },
                 )
               ],
@@ -337,6 +344,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Widget NotTrackingBarContent() {
+    ///    Bottom bar with recording button when not location is not being recorded
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -367,10 +375,10 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     bg.BackgroundGeolocation.getCurrentPosition(
                                             maximumAge: 0, persist: false, desiredAccuracy: 0, timeout: 30000, samples: 1)
                                         .then((bg.Location location) {
-                                      print('[getCurrentPosition] - $location');
+                                      log('[getCurrentPosition] - $location');
                                       this.location = location;
                                     }).catchError((error) {
-                                      print('[getCurrentPosition] ERROR: $error');
+                                      log('[getCurrentPosition] ERROR: $error');
                                     });
                                   });
                                   Navigator.of(context).pop();
@@ -397,6 +405,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Widget TrackingBarContent() {
+    ///    Bottom bar with recording button when not location IS being recorded
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -426,16 +435,8 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     );
   }
 
-  void showNotification(BuildContext context, String message) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
   Widget EndRecordingDialog(BuildContext context) {
+    ///    Dialog shown before stopping tracking and submitting results
     return StatefulBuilder(
       builder: (BuildContext context, void Function(void Function()) setState) {
         return PopScope(
@@ -496,7 +497,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                   final responseStatusCode = await uploadResultGpx();
 
                                   if (responseStatusCode != 202) {
-                                    showNotification(context, "Błąd przesyłania: $responseStatusCode");
+                                    showSnackbarMessage(context, "Błąd przesyłania: $responseStatusCode");
                                     setState(() {
                                       isUploading = false;
                                       wasUploadSuccess = false;
@@ -508,7 +509,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     isUploading = false;
                                     wasUploadSuccess = true;
                                   });
-                                  showNotification(context, "Przesłano!");
+                                  showSnackbarMessage(context, "Przesłano!");
                                   await Future.delayed(Duration(seconds: 3));
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();
@@ -524,6 +525,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Future<int> uploadResultGpx() async {
+    ///    Uploads a gpx file (a result of tracking) to a server
     final fileUuid = uuid.v4();
     final filename = 'race_${widget.raceId}_ride_${fileUuid}';
 
@@ -532,7 +534,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     final writer = GpxWriter().asString(gpx, pretty: true);
 
     final url = Uri.parse('${settings.uploadBaseUrl}${widget.raceId}/upload-result');
-    print("Upload to ${url}");
+    log("Upload to ${url}");
     var request = new http.MultipartRequest("POST", url);
     request.fields['name'] = filename;
     request.files.add(http.MultipartFile.fromString('fileobj', writer.toString(), filename: filename));
@@ -540,9 +542,9 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     return await request.send().then((streamedResponse) async {
       final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 202) {
-        print("Uploaded!");
+        log("Uploaded!");
       } else {
-        print("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
+        log("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
       }
       ;
       return response.statusCode;
@@ -550,6 +552,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Gpx dumpGpx(List<LatLng> trackpoints, List<DateTime> timestamps, [String name = "", String desc = "", DateTime? time]) {
+    ///    Dumps recorded trackpoints with timestamps to a GPX file
     time = time ?? DateTime.now();
     final gpx = Gpx();
     gpx.version = '1.1';
@@ -570,23 +573,17 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   }
 
   Future<int> withdrawFromRace() async {
+    ///    Make a withdraw request to server and show result notification
     final response = await http.post(
       Uri.parse('${settings.apiBaseUrl}/api/rider/race/${widget.raceId}/withdraw'),
       headers: {'Authorization': 'Bearer ${widget.accessToken}'},
     );
 
     if (response.statusCode == 200) {
-      showNotification(context, 'Wycofano udział z wyścigu');
+      showSnackbarMessage(context, 'Wycofano udział z wyścigu');
     } else {
-      showNotification(context, 'Błąd podczas wycofywania udziału z wyścigu');
+      showSnackbarMessage(context, 'Błąd podczas wycofywania udziału z wyścigu');
     }
     return response.statusCode;
-  }
-}
-
-extension DarkMode on BuildContext {
-  bool get isDarkMode1 {
-    final brightness = MediaQuery.of(this).platformBrightness;
-    return brightness == Brightness.dark;
   }
 }

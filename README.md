@@ -1,16 +1,37 @@
-# sigmactas_alleycat
+## Quickstart guide
 
-A new Flutter project.
+### Prerequisites
+- You will need Dart & Flutter to run the app. Check the installation guide [here](https://docs.flutter.dev/get-started/install.) Dart SDK should be installed along with Flutter SDK.
+- If you are using Android Studio, you may need to manually setup SDK paths. Find the Flutter SDK install path by `flutter doctor -v` and set it as **both** Dart and Flutter SDK path in IDE settings.
+- Before running the app, you will need to copy `.env.sample` to `.env`. You may want to configure backend URL and upload port in the envfile.
+- \[Android\] [Android Studio](https://developer.android.com/studio) or [Android SDK standalone](https://developer.android.com/tools) (not recommended)
+- \[iOS\] [Xcode](https://developer.apple.com/xcode/) and [iOS SDK](https://developer.apple.com/ios/)
 
-## Getting Started
+### Install requirements
 
-This project is a starting point for a Flutter application.
+```shell
+flutter pub get
+```
 
-A few resources to get you started if this is your first Flutter project:
+### Build the app
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```shell
+# Android
+flutter build apk 
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# iOS
+flutter build ipa
+```
+
+### Install on an Android device
+```shell
+adb install <path/to/apk>
+```
+
+### Install on an iOS device
+
+Use Xcode or refer to [guides](https://forums.developer.apple.com/forums/thread/124115)
+
+### NOTE
+
+Please kindly ignore the "LICENSE VALIDATION ERROR" toast on app startup. This app uses a non-free [flutter_background_geolocation](https://pub.dev/packages/flutter_background_geolocation) plugin which requires a license in Android release builds - despite that, it shows the toast in debug builds as well.

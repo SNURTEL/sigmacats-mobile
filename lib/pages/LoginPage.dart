@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'settings.dart' as settings;
+
+import 'package:sigmactas_alleycat/util/settings.dart' as settings;
+import 'package:sigmactas_alleycat/util/notification.dart';
 
 class LoginPage extends StatefulWidget {
+  ///  Login page widget
   const LoginPage({Key? key}) : super(key: key);
 
   @override
@@ -11,12 +14,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  ///  Login page widget state
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
 
   Future<void> _handleLogin(BuildContext context) async {
+    ///    Handles logging in, returns response in form of a message
     if (_formKey.currentState?.validate() ?? false) {
       String username = _usernameController.text;
       String password = _passwordController.text;
@@ -30,19 +35,19 @@ class _LoginPageState extends State<LoginPage> {
           String accessToken = responseData['access_token'];
           Navigator.pushReplacementNamed(context, '/race_list', arguments: accessToken);
         } else if (response.statusCode == 400) {
-          showNotification(context, 'Niepoprawny adres email bądź hasło.');
+          showSnackbarMessage(context, 'Niepoprawny adres email bądź hasło.');
         } else {
-          showNotification(context, 'Błąd logowania.');
+          showSnackbarMessage(context, 'Błąd logowania.');
         }
       } catch (e) {
-        print(e);
-        showNotification(context, 'Wystąpił błąd.');
+        showSnackbarMessage(context, 'Wystąpił błąd.');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ///    Builds the login page
     return Scaffold(
       appBar: AppBar(
         title: const Text('Logowanie'),
@@ -61,7 +66,8 @@ class _LoginPageState extends State<LoginPage> {
                     if (value == null || value.isEmpty) {
                       return "Adres email nie może być pusty.";
                     }
-                    if (!RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+                    if (!RegExp(
+                            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
                         .hasMatch(value)) {
                       return "Niepoprawny adres email.";
                     }
@@ -127,14 +133,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  void showNotification(BuildContext context, String message) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 3),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
