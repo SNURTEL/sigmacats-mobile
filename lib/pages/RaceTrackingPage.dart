@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -131,7 +132,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
   void setupTracking() {
     ///    Sets up the tracking library
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
-      print('[location] - $location');
+      log('[location] - $location');
       setState(() {
         this.location = location;
 
@@ -152,11 +153,11 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     });
 
     bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      print('[motionchange] - $location');
+      log('[motionchange] - $location');
     });
 
     bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
-      print('[providerchange] - $event');
+      log('[providerchange] - $event');
     });
 
     bg.BackgroundGeolocation.ready(bg.Config(
@@ -179,7 +180,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
         reset: true));
 
     bg.BackgroundGeolocation.start().then((bg.State state) {
-      print('[start] success $state');
+      log('[start] success $state');
     });
     bg.BackgroundGeolocation.changePace(true);
     trackingStartedTimestamp = DateTime.now();
@@ -374,10 +375,10 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     bg.BackgroundGeolocation.getCurrentPosition(
                                             maximumAge: 0, persist: false, desiredAccuracy: 0, timeout: 30000, samples: 1)
                                         .then((bg.Location location) {
-                                      print('[getCurrentPosition] - $location');
+                                      log('[getCurrentPosition] - $location');
                                       this.location = location;
                                     }).catchError((error) {
-                                      print('[getCurrentPosition] ERROR: $error');
+                                      log('[getCurrentPosition] ERROR: $error');
                                     });
                                   });
                                   Navigator.of(context).pop();
@@ -533,7 +534,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     final writer = GpxWriter().asString(gpx, pretty: true);
 
     final url = Uri.parse('${settings.uploadBaseUrl}${widget.raceId}/upload-result');
-    print("Upload to ${url}");
+    log("Upload to ${url}");
     var request = new http.MultipartRequest("POST", url);
     request.fields['name'] = filename;
     request.files.add(http.MultipartFile.fromString('fileobj', writer.toString(), filename: filename));
@@ -541,9 +542,9 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     return await request.send().then((streamedResponse) async {
       final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 202) {
-        print("Uploaded!");
+        log("Uploaded!");
       } else {
-        print("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
+        log("Error ${response.statusCode}: ${json.decode(utf8.decode(response.bodyBytes))}");
       }
       ;
       return response.statusCode;

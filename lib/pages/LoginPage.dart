@@ -40,7 +40,6 @@ class _LoginPageState extends State<LoginPage> {
           showSnackbarMessage(context, 'Błąd logowania.');
         }
       } catch (e) {
-        print(e);
         showSnackbarMessage(context, 'Wystąpił błąd.');
       }
     }
