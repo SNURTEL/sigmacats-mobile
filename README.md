@@ -31,3 +31,7 @@ adb install <path/to/apk>
 ### Install on an iOS device
 
 Use Xcode or refer to [guides](https://forums.developer.apple.com/forums/thread/124115)
+
+### NOTE
+
+Please kindly ignore the "LICENSE VALIDATION ERROR" toast on app startup. This app uses a non-free [flutter_background_geolocation](https://pub.dev/packages/flutter_background_geolocation) plugin which requires a license in Android release builds - despite that, it shows the toast in debug builds as well.
