@@ -68,9 +68,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     if (response.statusCode == 201) {
       Navigator.pushReplacementNamed(context, '/');
-      showNotification(context, 'Udało się zarejestrować!');
+      showSnackbarMessage(context, 'Udało się zarejestrować!');
     } else {
-      showNotification(context, 'Błąd podczas rejestracji ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas rejestracji ${response.statusCode}');
     }
   }
 

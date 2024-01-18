@@ -35,13 +35,13 @@ class _LoginPageState extends State<LoginPage> {
           String accessToken = responseData['access_token'];
           Navigator.pushReplacementNamed(context, '/race_list', arguments: accessToken);
         } else if (response.statusCode == 400) {
-          showNotification(context, 'Niepoprawny adres email bądź hasło.');
+          showSnackbarMessage(context, 'Niepoprawny adres email bądź hasło.');
         } else {
-          showNotification(context, 'Błąd logowania.');
+          showSnackbarMessage(context, 'Błąd logowania.');
         }
       } catch (e) {
         print(e);
-        showNotification(context, 'Wystąpił błąd.');
+        showSnackbarMessage(context, 'Wystąpił błąd.');
       }
     }
   }

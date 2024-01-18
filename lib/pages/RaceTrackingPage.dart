@@ -496,7 +496,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                   final responseStatusCode = await uploadResultGpx();
 
                                   if (responseStatusCode != 202) {
-                                    showNotification(context, "Błąd przesyłania: $responseStatusCode");
+                                    showSnackbarMessage(context, "Błąd przesyłania: $responseStatusCode");
                                     setState(() {
                                       isUploading = false;
                                       wasUploadSuccess = false;
@@ -508,7 +508,7 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
                                     isUploading = false;
                                     wasUploadSuccess = true;
                                   });
-                                  showNotification(context, "Przesłano!");
+                                  showSnackbarMessage(context, "Przesłano!");
                                   await Future.delayed(Duration(seconds: 3));
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();
@@ -579,9 +579,9 @@ class _RaceTrackingPageState extends State<RaceTrackingPage> {
     );
 
     if (response.statusCode == 200) {
-      showNotification(context, 'Wycofano udział z wyścigu');
+      showSnackbarMessage(context, 'Wycofano udział z wyścigu');
     } else {
-      showNotification(context, 'Błąd podczas wycofywania udziału z wyścigu');
+      showSnackbarMessage(context, 'Błąd podczas wycofywania udziału z wyścigu');
     }
     return response.statusCode;
   }

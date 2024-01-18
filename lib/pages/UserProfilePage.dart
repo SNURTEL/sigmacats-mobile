@@ -110,9 +110,9 @@ class _UserProfileState extends State<UserProfile> {
       await fetchUserInfo();
       await fetchBikesDetails();
       setState(() {});
-      showNotification(context, 'Udało się usunąć rower!');
+      showSnackbarMessage(context, 'Udało się usunąć rower!');
     } else {
-      showNotification(context, 'Błąd podczas usuwania roweru ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas usuwania roweru ${response.statusCode}');
     }
   }
 
@@ -135,9 +135,9 @@ class _UserProfileState extends State<UserProfile> {
       await fetchUserInfo();
       await fetchBikesDetails();
       setState(() {});
-      showNotification(context, 'Udało się edytować rower!');
+      showSnackbarMessage(context, 'Udało się edytować rower!');
     } else {
-      showNotification(context, 'Błąd podczas edytowania roweru ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas edytowania roweru ${response.statusCode}');
     }
   }
 
@@ -160,9 +160,9 @@ class _UserProfileState extends State<UserProfile> {
       await fetchUserInfo();
       await fetchBikesDetails();
       setState(() {});
-      showNotification(context, 'Udało się dodać nowy rower!');
+      showSnackbarMessage(context, 'Udało się dodać nowy rower!');
     } else {
-      showNotification(context, 'Błąd podczas dodawania roweru ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas dodawania roweru ${response.statusCode}');
     }
   }
 
@@ -187,7 +187,7 @@ class _UserProfileState extends State<UserProfile> {
               icon: const Icon(Icons.logout),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/');
-                showNotification(context, 'Wylogowano!');
+                showSnackbarMessage(context, 'Wylogowano!');
               },
             )
           ],

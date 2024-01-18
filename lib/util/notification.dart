@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-void showNotification(BuildContext context, String message) {
+void showSnackbarMessage(BuildContext context, String message) {
   ///    Shows notification in snackbar
   final snackBar = SnackBar(
     content: Text(message),

@@ -157,9 +157,9 @@ class _RaceDetailsState extends State<RaceDetails> {
       setState(() {
         isParticipating = true;
       });
-      showNotification(context, 'Udało się zapisać na wyścig!');
+      showSnackbarMessage(context, 'Udało się zapisać na wyścig!');
     } else {
-      showNotification(context, 'Błąd podczas zapisywania na wyścig ${response.statusCode}');
+      showSnackbarMessage(context, 'Błąd podczas zapisywania na wyścig ${response.statusCode}');
     }
   }
 
@@ -174,9 +174,9 @@ class _RaceDetailsState extends State<RaceDetails> {
       setState(() {
         isParticipating = false;
       });
-      showNotification(context, 'Wycofano udział z wyścigu');
+      showSnackbarMessage(context, 'Wycofano udział z wyścigu');
     } else {
-      showNotification(context, 'Błąd podczas wycofywania udziału z wyścigu');
+      showSnackbarMessage(context, 'Błąd podczas wycofywania udziału z wyścigu');
     }
   }
 

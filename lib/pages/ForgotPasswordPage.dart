@@ -27,13 +27,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         final response = await http.post(apiUrl, body: {'email': email});
 
         if (response.statusCode == 202) {
-          showNotification(context, "Wysłano wiadomość! Sprawdź skrzynkę.");
+          showSnackbarMessage(context, "Wysłano wiadomość! Sprawdź skrzynkę.");
         } else {
-          showNotification(context, 'Niepoprawny adres email.');
+          showSnackbarMessage(context, 'Niepoprawny adres email.');
         }
       } catch (e) {
         // Handle any exceptions or network errors
-        showNotification(context, 'Wystąpił błąd.');
+        showSnackbarMessage(context, 'Wystąpił błąd.');
       }
     }
   }
