@@ -1,9 +1,17 @@
+# sigmacats-mobile
+
+![banner.png](.img/banner.png)
+
+## IMPORTANT NOTE
+
+This is the mobile repository for the SIGMACATS project. Check out the [main repo](https://github.com/SNURTEL/23z-pzsp2-sigmacats) first.
+
 ## Quickstart guide
 
 ### Prerequisites
 - You will need Dart & Flutter to run the app. Check the installation guide [here](https://docs.flutter.dev/get-started/install.) Dart SDK should be installed along with Flutter SDK.
 - If you are using Android Studio, you may need to manually setup SDK paths. Find the Flutter SDK install path by `flutter doctor -v` and set it as **both** Dart and Flutter SDK path in IDE settings.
-- Before running the app, you will need to copy `.env.sample` to `.env`. You may want to configure backend URL and upload port in the envfile.
+- Before running the app, you will need to copy `.env.sample` to `.env`. **You may want to configure backend URL and upload port in the envfile.**
 - \[Android\] [Android Studio](https://developer.android.com/studio) or [Android SDK standalone](https://developer.android.com/tools) (not recommended)
 - \[iOS\] [Xcode](https://developer.apple.com/xcode/) and [iOS SDK](https://developer.apple.com/ios/)
 
